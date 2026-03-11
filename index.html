@@ -294,13 +294,13 @@ tr:hover td{background:rgba(255,255,255,.015);}
     </div>
     <div class="sidebar-credits" id="creditsBar">
       <div><div class="credits-label">Eşleştirme Hakkı</div><div class="credits-val" id="creditsVal">0</div></div>
-      <div class="credits-buy" onclick="navTo('paket')">Satın Al →</div>
+      <div class="credits-buy" id="creditsBuyBtn" onclick="navTo('paket')" style="display:none">Satın Al →</div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')"><span class="nav-icon">◈</span> Panel</div>
       <div class="nav-item" data-page="musteriler" onclick="navTo('musteriler')"><span class="nav-icon">◉</span> Müşteriler</div>
       <div class="nav-item" data-page="eslesmeler" onclick="navTo('eslesmeler')"><span class="nav-icon">◎</span> Eşleşmeler</div>
-      <div class="nav-item" data-page="paket" onclick="navTo('paket')"><span class="nav-icon">◇</span> Hak Satın Al</div>
+      <div class="nav-item" id="navPaket" data-page="paket" onclick="navTo('paket')" style="display:none"><span class="nav-icon">◇</span> Hak Satın Al</div>
       <div class="nav-item" data-page="ayarlar" onclick="navTo('ayarlar')"><span class="nav-icon">⚙</span> Ayarlar</div>
       <div class="nav-item" id="navAdmin" data-page="admin" onclick="navTo('admin')" style="display:none"><span class="nav-icon">◆</span> Yönetim <span class="admin-badge">Admin</span><span class="nav-badge" id="onayBadge" style="display:none">0</span></div>
     </nav>
@@ -547,9 +547,24 @@ tr:hover td{background:rgba(255,255,255,.015);}
 
 <div class="toast" id="toast"></div>
 
+<!-- MODAL: DANISMAN EKLE (ADMIN) -->
+<div class="modal-overlay" id="addDanismanModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title">Danışman Ekle</div>
+    <div class="form-row"><div class="field-label">Ad Soyad</div><input type="text" class="field-input" id="dAd" placeholder="Ahmet Yılmaz" autocomplete="off"></div>
+    <div class="form-row"><div class="field-label">Kullanıcı Adı</div><input type="text" class="field-input" id="dUser" style="margin-bottom:0" autocomplete="off" oninput="this.value=this.value.toLowerCase()"></div>
+    <div class="form-row"><div class="field-label">Şifre</div><input type="password" class="field-input" id="dPass" style="margin-bottom:0" autocomplete="off"></div>
+    <div class="form-row"><div class="field-label">Telefon</div><input type="tel" class="field-input" id="dTel" placeholder="05xx..." style="margin-bottom:0"></div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeModal('addDanismanModal')">İptal</button>
+      <button class="btn-save" onclick="saveDanismanAdmin()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <script>
 var db={
-  settings:{siteName:'Portföy',paketFiyat:200,paketHak:10,baslamHakki:3,eslesmeHakMaliyeti:1,eslemeSayisiGorunsun:true,kiralikKategoriAktif:true,maxMusteri:0,iller:{'Gaziantep':['Şahinbey','Şehitkamil','Nizip','İslahiye','Nurdağı','Oğuzeli','Araban','Yavuzeli','Karkamış'],'Adıyaman':['Merkez','Besni','Çelikhan','Gerger','Gölbaşı','Kahta','Samsat','Sincik','Tut'],'Adana':['Seyhan','Çukurova','Yüreğir','Sarıçam','Ceyhan','İmamoğlu','Kozan','Tufanbeyli','Pozantı'],'İstanbul':['Kadıköy','Beşiktaş','Şişli','Üsküdar','Fatih','Beyoğlu','Bakırköy','Maltepe','Ataşehir'],'Ankara':['Çankaya','Keçiören','Yenimahalle','Mamak','Etimesgut','Sincan','Altındağ','Pursaklar','Gölbaşı'],'İzmir':['Bornova','Buca','Konak','Karşıyaka','Çiğli','Gaziemir','Karabağlar','Narlıdere','Balçova']}},
+  settings:{siteName:'Portföy',paketFiyat:200,paketHak:10,baslamHakki:3,eslesmeHakMaliyeti:1,eslemeSayisiGorunsun:true,kiralikKategoriAktif:true,hakSatinAlmaAktif:false,maxMusteri:0,iller:{"Adana": ["Seyhan", "Çukurova", "Yüreğir", "Sarıçam", "Ceyhan", "İmamoğlu", "Kozan", "Tufanbeyli", "Pozantı", "Aladağ", "Karaisalı", "Karataş"], "Adıyaman": ["Merkez", "Besni", "Çelikhan", "Gerger", "Gölbaşı", "Kahta", "Samsat", "Sincik", "Tut"], "Afyonkarahisar": ["Merkez", "Bolvadin", "Çay", "Dinar", "Emirdağ", "İhsaniye", "İscehisar", "Sandıklı", "Sinanpaşa", "Sultandağı", "Şuhut"], "Ağrı": ["Merkez", "Diyadin", "Doğubayazıt", "Eleşkirt", "Hamur", "Patnos", "Taşlıçay", "Tutak"], "Amasya": ["Merkez", "Göynücek", "Gümüşhacıköy", "Hamamözü", "Merzifon", "Suluova", "Taşova"], "Ankara": ["Çankaya", "Keçiören", "Yenimahalle", "Mamak", "Etimesgut", "Sincan", "Altındağ", "Pursaklar", "Gölbaşı", "Kahramankazan", "Beypazarı", "Ayaş", "Bala", "Çamlıdere", "Çubuk", "Elmadağ", "Evren", "Güdül", "Haymana", "Kızılcahamam", "Nallıhan", "Polatlı", "Şereflikoçhisar"], "Antalya": ["Muratpaşa", "Kepez", "Konyaaltı", "Alanya", "Manavgat", "Serik", "Aksu", "Döşemealtı", "Kemer", "Finike", "Gazipaşa", "Demre", "Elmalı", "İbradı", "Kaş", "Korkuteli", "Kumluca", "Side"], "Artvin": ["Merkez", "Ardanuç", "Arhavi", "Borçka", "Hopa", "Murgul", "Şavşat", "Yusufeli"], "Aydın": ["Efeler", "Nazilli", "Söke", "Kuşadası", "Didim", "İncirliova", "Germencik", "Kuyucak", "Bozdoğan", "Köşk", "Buharkent", "Karacasu", "Koçarlı", "Sultanhisar", "Yenipazar"], "Balıkesir": ["Altıeylül", "Karesi", "Edremit", "Bandırma", "Gönen", "Ayvalık", "Burhaniye", "Bigadiç", "Dursunbey", "Erdek", "İvrindi", "Kepsut", "Manyas", "Marmara", "Savaştepe", "Sındırgı", "Susurluk"], "Bilecik": ["Merkez", "Bozüyük", "Gölpazarı", "İnhisar", "Osmaneli", "Pazaryeri", "Söğüt", "Yenipazar"], "Bingöl": ["Merkez", "Adaklı", "Genç", "Karlıova", "Kiğı", "Solhan", "Yayladere", "Yedisu"], "Bitlis": ["Merkez", "Adilcevaz", "Ahlat", "Güroymak", "Hizan", "Mutki", "Tatvan"], "Bolu": ["Merkez", "Gerede", "Göynük", "Kıbrıscık", "Mengen", "Mudurnu", "Seben", "Dörtdivan", "Yeniçağa"], "Burdur": ["Merkez", "Ağlasun", "Altınyayla", "Bucak", "Çavdır", "Çeltikçi", "Gölhisar", "Karamanlı", "Kemer", "Tefenni", "Yeşilova"], "Bursa": ["Osmangazi", "Nilüfer", "Yıldırım", "İnegöl", "Gemlik", "Mudanya", "Kestel", "Gürsu", "Karacabey", "Mustafakemalpaşa", "Orhangazi", "Orhaneli", "İznik", "Büyükorhan", "Harmancık", "Keles", "Yenişehir"], "Çanakkale": ["Merkez", "Biga", "Çan", "Gelibolu", "Ayvacık", "Bayramiç", "Eceabat", "Ezine", "Gökçeada", "İmroz", "Lapseki", "Yenice"], "Çankırı": ["Merkez", "Atkaracalar", "Bayramören", "Çerkeş", "Eldivan", "Ilgaz", "Kızılırmak", "Korgun", "Kurşunlu", "Orta", "Şabanözü", "Yapraklı"], "Çorum": ["Merkez", "Alaca", "Bayat", "Boğazkale", "Dodurga", "İskilip", "Kargı", "Laçin", "Mecitözü", "Oğuzlar", "Ortaköy", "Osmancık", "Sungurlu", "Uğurludağ"], "Denizli": ["Pamukkale", "Merkezefendi", "Acıpayam", "Babadağ", "Baklan", "Bekilli", "Beyağaç", "Bozkurt", "Buldan", "Çal", "Çameli", "Çardak", "Çivril", "Güney", "Honaz", "Kale", "Sarayköy", "Serinhisar", "Tavas"], "Diyarbakır": ["Bağlar", "Kayapınar", "Sur", "Yenişehir", "Bismil", "Çermik", "Çınar", "Çüngüş", "Dicle", "Eğil", "Ergani", "Hani", "Hazro", "Kocaköy", "Kulp", "Lice", "Silvan"], "Düzce": ["Merkez", "Akçakoca", "Cumayeri", "Çilimli", "Gümüşova", "Gölyaka", "Kaynaşlı", "Yığılca"], "Edirne": ["Merkez", "Enez", "Havsa", "İpsala", "Keşan", "Lalapaşa", "Meriç", "Süloğlu", "Uzunköprü"], "Elazığ": ["Merkez", "Ağın", "Alacakaya", "Arıcak", "Baskil", "Karakoçan", "Keban", "Kovancılar", "Maden", "Palu", "Sivrice"], "Erzincan": ["Merkez", "Çayırlı", "İliç", "Kemah", "Kemaliye", "Otlukbeli", "Refahiye", "Tercan", "Üzümlü"], "Erzurum": ["Yakutiye", "Palandöken", "Aziziye", "Oltu", "Tortum", "Aşkale", "Çat", "Hınıs", "Horasan", "İspir", "Karaçoban", "Karayazı", "Narman", "Olur", "Pasinler", "Pazaryolu", "Şenkaya", "Tekman", "Uzundere"], "Eskişehir": ["Odunpazarı", "Tepebaşı", "Alpu", "Beylikova", "Çifteler", "Günyüzü", "Han", "İnönü", "Mahmudiye", "Mihalgazi", "Mihalıççık", "Sarıcakaya", "Seyitgazi", "Sivrihisar"], "Gaziantep": ["Şahinbey", "Şehitkamil", "Nizip", "İslahiye", "Nurdağı", "Oğuzeli", "Araban", "Yavuzeli", "Karkamış"], "Giresun": ["Merkez", "Alucra", "Bulancak", "Çamoluk", "Çanakçı", "Dereli", "Doğankent", "Espiye", "Eynesil", "Görele", "Güce", "Keşap", "Piraziz", "Şebinkarahisar", "Tirebolu", "Yağlıdere"], "Gümüşhane": ["Merkez", "Kelkit", "Köse", "Kürtün", "Şiran", "Torul"], "Hakkari": ["Merkez", "Çukurca", "Şemdinli", "Yüksekova"], "Hatay": ["Antakya", "İskenderun", "Defne", "Samandağ", "Dörtyol", "Payas", "Erzin", "Hassa", "Kırıkhan", "Kumlu", "Reyhanlı", "Yayladağı", "Altınözü", "Belen"], "Iğdır": ["Merkez", "Aralık", "Karakoyunlu", "Tuzluca"], "Isparta": ["Merkez", "Atabey", "Eğirdir", "Gelendost", "Gönen", "Keçiborlu", "Senirkent", "Sütçüler", "Şarkikaraağaç", "Uluborlu", "Yalvaç", "Aksu"], "İstanbul": ["Adalar", "Arnavutköy", "Ataşehir", "Avcılar", "Bağcılar", "Bahçelievler", "Bakırköy", "Başakşehir", "Bayrampaşa", "Beşiktaş", "Beykoz", "Beylikdüzü", "Beyoğlu", "Büyükçekmece", "Çatalca", "Çekmeköy", "Esenler", "Esenyurt", "Eyüpsultan", "Fatih", "Gaziosmanpaşa", "Güngören", "Kadıköy", "Kağıthane", "Kartal", "Küçükçekmece", "Maltepe", "Pendik", "Sancaktepe", "Sarıyer", "Silivri", "Sultanbeyli", "Sultangazi", "Şile", "Şişli", "Tuzla", "Ümraniye", "Üsküdar", "Zeytinburnu"], "İzmir": ["Bornova", "Buca", "Konak", "Karşıyaka", "Çiğli", "Gaziemir", "Karabağlar", "Narlıdere", "Balçova", "Bayraklı", "Bayındır", "Bergama", "Beydağ", "Çeşme", "Dikili", "Foça", "Güzelbahçe", "Karaburun", "Kemalpaşa", "Kınık", "Kiraz", "Menderes", "Menemen", "Ödemiş", "Seferihisar", "Selçuk", "Tire", "Torbalı", "Urla"], "Kahramanmaraş": ["Dulkadiroğlu", "Onikişubat", "Afşin", "Andırın", "Çağlayancerit", "Ekinözü", "Elbistan", "Göksun", "Nurhak", "Pazarcık", "Türkoğlu"], "Karabük": ["Merkez", "Eflani", "Eskipazar", "Ovacık", "Safranbolu", "Yenice"], "Karaman": ["Merkez", "Ayrancı", "Başyayla", "Ermenek", "Kazımkarabekir", "Sarıveliler"], "Kars": ["Merkez", "Akyaka", "Arpaçay", "Digor", "Kağızman", "Sarıkamış", "Selim", "Susuz"], "Kastamonu": ["Merkez", "Abana", "Ağlı", "Araç", "Azdavay", "Bozkurt", "Cide", "Çatalzeytin", "Daday", "Devrekani", "Doğanyurt", "Hanönü", "İhsangazi", "İnebolu", "Küre", "Pınarbaşı", "Şenpazar", "Taşköprü", "Tosya"], "Kayseri": ["Kocasinan", "Melikgazi", "Talas", "Hacılar", "İncesu", "Yahyalı", "Bünyan", "Develi", "Felahiye", "Akkışla", "Özvatan", "Pınarbaşı", "Sarıoğlan", "Sarız", "Tomarza", "Yeşilhisar"], "Kırıkkale": ["Merkez", "Bahşılı", "Balışeyh", "Çelebi", "Delice", "Karakeçili", "Keskin", "Sulakyurt", "Yahşihan"], "Kırklareli": ["Merkez", "Babaeski", "Demirköy", "Kofçaz", "Lüleburgaz", "Pehlivanköy", "Pınarhisar", "Vize"], "Kırşehir": ["Merkez", "Akçakent", "Akpınar", "Boztepe", "Çiçekdağı", "Kaman", "Mucur"], "Kilis": ["Merkez", "Elbeyli", "Musabeyli", "Polateli"], "Kocaeli": ["İzmit", "Gebze", "Darıca", "Körfez", "Gölcük", "Başiskele", "Derince", "Dilovası", "Kartepe", "Kandıra", "Karamürsel", "Çayırova"], "Konya": ["Karatay", "Meram", "Selçuklu", "Akşehir", "Beyşehir", "Ereğli", "Seydişehir", "Ilgın", "Çumra", "Kulu", "Cihanbeyli", "Doğanhisar", "Hadim", "Hüyük", "Kadınhanı", "Karapınar", "Sarayönü", "Taşkent", "Tuzlukçu", "Yalıhüyük"], "Kütahya": ["Merkez", "Altıntaş", "Aslanapa", "Çavdarhisar", "Domaniç", "Dumlupınar", "Emet", "Gediz", "Hisarcık", "Pazarlar", "Simav", "Şaphane", "Tavşanlı"], "Malatya": ["Battalgazi", "Yeşilyurt", "Akçadağ", "Arapgir", "Arguvan", "Darende", "Doğanşehir", "Doğanyol", "Hekimhan", "Kale", "Kuluncak", "Pütürge", "Yazıhan"], "Manisa": ["Şehzadeler", "Yunusemre", "Akhisar", "Turgutlu", "Salihli", "Soma", "Kırkağaç", "Alaşehir", "Demirci", "Gördes", "Köprübaşı", "Kula", "Sarıgöl", "Saruhanlı", "Selendi"], "Mardin": ["Artuklu", "Kızıltepe", "Midyat", "Nusaybin", "Derik", "Mazıdağı", "Savur", "Dargeçit", "Hasankeyf", "Ömerli"], "Mersin": ["Akdeniz", "Mezitli", "Toroslar", "Yenişehir", "Tarsus", "Erdemli", "Silifke", "Anamur", "Mut", "Bozyazı", "Aydıncık", "Çamlıyayla", "Gülnar"], "Muğla": ["Menteşe", "Bodrum", "Fethiye", "Marmaris", "Milas", "Dalaman", "Datça", "Köyceğiz", "Ortaca", "Seydikemer", "Ula", "Yatağan"], "Muş": ["Merkez", "Bulanık", "Hasköy", "Korkut", "Malazgirt", "Varto"], "Nevşehir": ["Merkez", "Acıgöl", "Avanos", "Derinkuyu", "Gülşehir", "Hacıbektaş", "Kozaklı", "Ürgüp"], "Niğde": ["Merkez", "Altunhisar", "Bor", "Çamardı", "Çiftlik", "Ulukışla"], "Ordu": ["Altınordu", "Ünye", "Fatsa", "Giresun", "Akkuş", "Aybastı", "Çamaş", "Çatalpınar", "Çaybaşı", "Gölköy", "Gülyalı", "Gürgentepe", "İkizce", "Kabadüz", "Kabataş", "Korgan", "Kumru", "Mesudiye", "Perşembe", "Ulubey"], "Osmaniye": ["Merkez", "Bahçe", "Düziçi", "Hasanbeyli", "Kadirli", "Sumbas", "Toprakkale"], "Rize": ["Merkez", "Ardeşen", "Çamlıhemşin", "Çayeli", "Derepazarı", "Fındıklı", "Güneysu", "Hemşin", "İkizdere", "İyidere", "Kalkandere", "Pazar"], "Sakarya": ["Adapazarı", "Serdivan", "Erenler", "Arifiye", "Akyazı", "Hendek", "Karasu", "Sapanca", "Ferizli", "Geyve", "Kaynarca", "Kocaali", "Pamukova", "Taraklı"], "Samsun": ["Atakum", "Canik", "İlkadım", "Tekkeköy", "Bafra", "Çarşamba", "Terme", "Vezirköprü", "Alaçam", "Asarcık", "Ayvacık", "Havza", "Kavak", "Ladik", "19 Mayıs", "Ondokuzmayıs", "Salıpazarı", "Yakakent"], "Siirt": ["Merkez", "Baykan", "Eruh", "Kurtalan", "Pervari", "Şirvan", "Tillo"], "Sinop": ["Merkez", "Ayancık", "Boyabat", "Dikmen", "Durağan", "Erfelek", "Gerze", "Saraydüzü", "Türkeli"], "Sivas": ["Merkez", "Akıncılar", "Altınyayla", "Divriği", "Doğanşar", "Gemerek", "Gürün", "Hafik", "İmranlı", "Kangal", "Koyulhisar", "Suşehri", "Şarkışla", "Ulaş", "Yıldızeli", "Zara"], "Şanlıurfa": ["Eyyübiye", "Haliliye", "Karaköprü", "Birecik", "Bozova", "Ceylanpınar", "Halfeti", "Harran", "Hilvan", "Siverek", "Suruç", "Viranşehir"], "Şırnak": ["Merkez", "Beytüşşebap", "Cizre", "Güçlükonak", "İdil", "Silopi", "Uludere"], "Tekirdağ": ["Süleymanpaşa", "Çorlu", "Ergene", "Çerkezköy", "Muratlı", "Hayrabolu", "Malkara", "Marmara Ereğlisi", "Saray", "Şarköy", "Kapaklı"], "Tokat": ["Merkez", "Almus", "Artova", "Başçiftlik", "Erbaa", "Niksar", "Pazar", "Reşadiye", "Sulusaray", "Turhal", "Yeşilyurt", "Zile"], "Trabzon": ["Ortahisar", "Akçaabat", "Araklı", "Arsin", "Beşikdüzü", "Çarşıbaşı", "Çaykara", "Dernekpazarı", "Düzköy", "Hayrat", "Köprübaşı", "Maçka", "Of", "Sürmene", "Şalpazarı", "Tonya", "Vakfıkebir", "Yomra"], "Tunceli": ["Merkez", "Çemişgezek", "Hozat", "Mazgirt", "Nazimiye", "Ovacık", "Pertek", "Pülümür"], "Uşak": ["Merkez", "Banaz", "Eşme", "Karahallı", "Sivaslı", "Ulubey"], "Van": ["İpekyolu", "Edremit", "Tuşba", "Gevaş", "Bahçesaray", "Başkale", "Çaldıran", "Çatak", "Erciş", "Gürpınar", "Muradiye", "Özalp", "Saray"], "Yalova": ["Merkez", "Altınova", "Armutlu", "Çınarcık", "Çiftlikköy", "Termal"], "Yozgat": ["Merkez", "Akdağmadeni", "Aydıncık", "Boğazlıyan", "Çandır", "Çayıralan", "Çekerek", "Kadışehri", "Saraykent", "Sarıkaya", "Şefaatli", "Sorgun", "Yenifakılı", "Yerköy"], "Zonguldak": ["Merkez", "Alaplı", "Çaycuma", "Devrek", "Ereğli", "Gökçebey", "Kilimli", "Kozlu"]}},
   users:[],
   musteriler:[],
   revealed:[],
@@ -696,6 +711,11 @@ function doLogout(){
 }
 
 function applySettings(){
+  // Hak satın alma görünürlüğü
+  var np=document.getElementById('navPaket');
+  var cb=document.getElementById('creditsBuyBtn');
+  if(np)np.style.display=db.settings.hakSatinAlmaAktif?'flex':'none';
+  if(cb)cb.style.display=db.settings.hakSatinAlmaAktif?'block':'none';
   var s=db.settings;
   document.getElementById('sidebarSiteName').textContent=s.siteName;
   var fk=document.getElementById('fbKiralik');var fki=document.getElementById('fbKiraci');
@@ -966,6 +986,9 @@ function renderAdminSection(name){
     updateOnayBadge();
   }
   if(name==='danismanlar'){
+    // Add button header
+    var addBtn=document.getElementById('adminDanismanAddBtn');
+    if(addBtn)addBtn.style.display='block';
     var agents=db.users.filter(function(u){return u.role==='agent';});
     document.getElementById('adminDanismanTable').innerHTML=agents.map(function(a){
       var mC=db.musteriler.filter(function(m){return m.agentId===a.id;}).length;
@@ -1008,11 +1031,44 @@ function addCreditsAdmin(agentId){
 function openDanismanModal(){['dAd','dUser','dPass','dTel'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('danismanModal').classList.add('open');}
 
 function saveDanisman(){
-  var ad=document.getElementById('dAd').value.trim();var user=document.getElementById('dUser').value.trim();var pass=document.getElementById('dPass').value;
+  var ad=document.getElementById('dAd').value.trim();
+  var user=document.getElementById('dUser').value.trim().toLowerCase();
+  var pass=document.getElementById('dPass').value;
+  var tel=document.getElementById('dTel').value.trim();
   if(!ad||!user||!pass){showToast('Ad, kullanıcı adı ve şifre zorunludur.');return;}
-  if(db.users.find(function(u){return u.username.toLowerCase()===user.toLowerCase();})){showToast('Bu kullanıcı adı alınmış.');return;}
-  db.users.push({id:db.nextId.user++,username:user,password:pass,name:ad,role:'agent',tel:document.getElementById('dTel').value,credits:db.settings.baslamHakki});
-  closeModal('danismanModal');renderAdmin();showToast(ad+' eklendi. '+db.settings.baslamHakki+' başlangıç hakkı verildi.');
+  if(db.users.find(function(u){return u.username.toLowerCase()===user;})){showToast('Bu kullanıcı adı alınmış.');return;}
+  supa.from('users').insert({username:user,password:pass,name:ad,role:'agent',tel:tel,credits:db.settings.baslamHakki}).select().single()
+    .then(function(res){
+      if(res.error){showToast('Hata: '+res.error.message);return;}
+      db.users.push(res.data);
+      closeModal('danismanModal');renderAdmin();
+      showToast(ad+' eklendi. '+db.settings.baslamHakki+' başlangıç hakkı verildi.');
+    });
+}
+
+function openAddDanismanModal(){
+  document.getElementById('dAd').value='';
+  document.getElementById('dUser').value='';
+  document.getElementById('dPass').value='';
+  document.getElementById('dTel').value='';
+  document.getElementById('addDanismanModal').classList.add('open');
+}
+
+function saveDanismanAdmin(){
+  var ad=document.getElementById('dAd').value.trim();
+  var user=document.getElementById('dUser').value.trim().toLowerCase();
+  var pass=document.getElementById('dPass').value;
+  var tel=document.getElementById('dTel').value.trim();
+  if(!ad||!user||!pass){showToast('Ad, kullanıcı adı ve şifre zorunlu.');return;}
+  if(db.users.find(function(u){return u.username.toLowerCase()===user;})){showToast('Bu kullanıcı adı alınmış.');return;}
+  supa.from('users').insert({username:user,password:pass,name:ad,role:'agent',tel:tel,credits:db.settings.baslamHakki}).select().single()
+    .then(function(res){
+      if(res.error){showToast('Hata: '+res.error.message);return;}
+      db.users.push(res.data);
+      closeModal('addDanismanModal');
+      renderAdminSection('danismanlar');
+      showToast('Danışman eklendi.');
+    });
 }
 
 function deleteDanisman(id){
@@ -1034,7 +1090,8 @@ function renderSettings(){
 
   '<div class="settings-card"><div class="settings-card-title">Görünürlük</div>'+
   '<div class="setting-row"><div><div class="setting-label">Eşleşme Sayısı Görünsün</div></div><label class="toggle"><input type="checkbox" '+(s.eslemeSayisiGorunsun?'checked':'')+' onchange="updateSetting(\'eslemeSayisiGorunsun\',this.checked)"><span class="toggle-slider"></span></label></div>'+
-  '<div class="setting-row"><div><div class="setting-label">Kiralık Kategori Aktif</div></div><label class="toggle"><input type="checkbox" '+(s.kiralikKategoriAktif?'checked':'')+' onchange="updateSetting(\'kiralikKategoriAktif\',this.checked);applySettings()"><span class="toggle-slider"></span></label></div></div>'+
+  '<div class="setting-row"><div><div class="setting-label">Kiralık Kategori Aktif</div></div><label class="toggle"><input type="checkbox" '+(s.kiralikKategoriAktif?'checked':'')+' onchange="updateSetting(\'kiralikKategoriAktif\',this.checked);applySettings()"><span class="toggle-slider"></span></label></div>'+
+  '<div class="setting-row"><div><div class="setting-label">Hak Satın Alma Aktif</div><div class="setting-desc">Danışmanlara hak satın alma görünsün</div></div><label class="toggle"><input type="checkbox" '+(s.hakSatinAlmaAktif?'checked':'')+' onchange="updateSetting(\'hakSatinAlmaAktif\',this.checked);applySettings()"><span class="toggle-slider"></span></label></div></div>'+
 
   '<div class="settings-card"><div class="settings-card-title">Danışman Limitleri</div>'+
   '<div class="setting-row"><div><div class="setting-label">Maks. Müşteri (0=∞)</div></div><input type="number" class="setting-input" value="'+s.maxMusteri+'" onchange="updateSetting(\'maxMusteri\',+this.value)"></div></div>'+
