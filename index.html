@@ -270,22 +270,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
 </head>
 <body>
 
-<div id="loginScreen">
-  <div class="login-card">
-    <div class="login-logo">Portföy</div>
-    <div class="login-sub">Emlak Yönetim Sistemi</div>
-    <div class="error-msg" id="loginError">Kullanıcı adı veya şifre hatalı.</div>
-    <div class="field-label">Kullanıcı Adı</div>
-    <input type="text" class="field-input" id="loginUser" placeholder="kullanici_adi" oninput="this.value=this.value.replace(/[İ]/g,'i').replace(/[I]/g,'i').toLowerCase()" autocomplete="username">
-    <div class="field-label">Şifre</div>
-    <input type="password" class="field-input" id="loginPass" placeholder="••••••••" autocomplete="current-password">
-    <button class="btn-primary" onclick="doLogin()">Giriş Yap</button>
-    <div class="login-hint">
-      <strong style="color:var(--text-dim)">Test Hesapları:</strong><br>
-      Admin: <span>admin</span> / <span>admin123</span><br>
-      Danışman 1: <span>ahmet</span> / <span>1234</span><br>
-      Danışman 2: <span>fatma</span> / <span>1234</span>
-    </div>
+
   </div>
 </div>
 
@@ -666,7 +651,7 @@ function doLogin(){
       
       // Load settings and musteriler
       Promise.all([
-        supa.from('settings').select('*').eq('id',1).single(),
+        supa.from('settings').select('*').eq('id',1).maybeSingle(),
         supa.from('musteriler').select('*'),
         supa.from('revealed').select('*').eq('viewer_id', user.id),
         supa.from('users').select('*')
