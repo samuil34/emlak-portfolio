@@ -1511,31 +1511,39 @@ function showMatchDetail(id){
   var m=db.musteriler.find(function(x){return +x.id===id;});
   if(!m)return;
   var matches=calcMatches(m);
+  // Başlıkta kendi müşterisinin özeti
   document.getElementById('matchDetailTitle').innerHTML=
-    '<span style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:2px">'+m.ad+'</span>'+
-    matches.length+' Eşleşme Bulundu';
+    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+    '<span style="font-size:15px;font-weight:600">'+m.ad+'</span>'+tipBadge(m.tip)+
+    '</div>'+
+    '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap">'+
+    (m.il?'<span>📍 '+m.il+(m.ilce?' / '+m.ilce:'')+'</span>':'')+
+    '<span>💰 ₺'+formatSayi(+(m.butce||0))+'</span>'+
+    (m.not?'<span>📝 '+m.not+'</span>':'')+
+    '</div>'+
+    '<div style="margin-top:8px;font-size:12px;color:var(--text-dim)">'+matches.length+' eşleşme bulundu</div>';
   if(matches.length===0){
     document.getElementById('matchDetailContent').innerHTML=
       '<div style="text-align:center;padding:30px;color:var(--text-muted)">Henüz eşleşme yok</div>';
   } else {
     var html='';
-    matches.forEach(function(x,i){
+    matches.forEach(function(x){
       var revealed=isRevealed(x.id);
-      html+='<div style="background:var(--surface2);border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;">';
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
+      html+='<div style="background:var(--surface2);border:1px solid rgba(201,168,76,0.2);padding:14px;margin-bottom:10px;border-radius:2px">';
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
       html+=tipBadge(x.tip);
-      html+='<span style="font-size:11px;color:var(--text-muted)">Danışman: gizli</span>';
+      html+='<span style="font-size:10px;color:var(--gold-dim);letter-spacing:1px">EŞLEŞEN KAYIT</span>';
       html+='</div>';
-      html+='<div style="font-size:12px;color:var(--text-dim);line-height:1.8">';
-      html+='📍 '+(x.ilce||'Herhangi')+'<br>';
-      html+='💰 ₺'+formatSayi(+(x.butce||0))+'<br>';
-      if(x.not)html+='📝 '+x.not+'<br>';
+      html+='<div style="font-size:13px;color:var(--text);line-height:2;display:grid;grid-template-columns:auto 1fr;gap:0 8px">';
+      if(x.il||x.ilce)html+='<span style="color:var(--text-muted)">📍</span><span>'+(x.il||'')+(x.ilce?' / '+x.ilce:'')+'</span>';
+      html+='<span style="color:var(--text-muted)">💰</span><span>₺'+formatSayi(+(x.butce||0))+'</span>';
+      if(x.not)html+='<span style="color:var(--text-muted)">📝</span><span>'+x.not+'</span>';
       html+='</div>';
       if(!revealed){
-        html+='<button onclick="revealMatch('+m.id+','+x.id+')" class="btn-sm" style="margin-top:8px;width:100%;text-align:center;">🔓 Detayı Gör (1 Hak)</button>';
+        html+='<button onclick="revealMatch('+m.id+','+x.id+')" class="btn-sm" style="margin-top:10px;width:100%;text-align:center;padding:8px">🔓 Danışmanı Gör ('+( db.settings.eslesmeHakMaliyeti||1)+' Hak)</button>';
       } else {
-        html+='<div style="margin-top:8px;padding:8px;background:var(--bg);border:1px solid var(--gold-dim);font-size:12px;color:var(--gold);">'+
-          '👤 '+agentName(x.agentId)+'</div>';
+        html+='<div style="margin-top:10px;padding:8px 10px;background:var(--bg);border:1px solid var(--gold-dim);font-size:12px;color:var(--gold);display:flex;align-items:center;gap:6px">'+
+          '👤 <strong>'+agentName(x.agentId)+'</strong></div>';
       }
       html+='</div>';
     });
