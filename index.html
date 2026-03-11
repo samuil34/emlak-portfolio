@@ -1707,11 +1707,16 @@ document.addEventListener('DOMContentLoaded', function(){
           if(s.paket_fiyat)db.settings.paketFiyat=s.paket_fiyat;
           if(s.paket_hak)db.settings.paketHak=s.paket_hak;
           if(s.baslam_hakki)db.settings.baslamHakki=s.baslam_hakki;
-          if(s.eslesme_maliyeti)db.settings.eslesmeMaliyeti=s.eslesme_maliyeti;
-          if(s.show_match_count!==null&&s.show_match_count!==undefined)db.settings.showMatchCount=s.show_match_count;
+          if(s.eslesme_maliyeti!=null)db.settings.eslesmeHakMaliyeti=s.eslesme_maliyeti;
+          if(s.show_match_count!==null&&s.show_match_count!==undefined)db.settings.eslemeSayisiGorunsun=s.show_match_count;
           if(s.kiralik_aktif!==null&&s.kiralik_aktif!==undefined)db.settings.kiralikKategoriAktif=s.kiralik_aktif;
           if(s.max_musteri!==null)db.settings.maxMusteri=s.max_musteri;
           if(s.hak_satinalma_aktif!==null&&s.hak_satinalma_aktif!==undefined)db.settings.hakSatinAlmaAktif=s.hak_satinalma_aktif;
+          if(s.ayni_danisman_eslesin!==null&&s.ayni_danisman_eslesin!==undefined)db.settings.ayniDanismanEslesmeSin=s.ayni_danisman_eslesin;
+          if(s.butce_uyumu_aktif!==null&&s.butce_uyumu_aktif!==undefined)db.settings.butceUyumuAktif=s.butce_uyumu_aktif;
+          if(s.butce_tolerans!==null&&s.butce_tolerans!==undefined)db.settings.butceTolerans=s.butce_tolerans;
+          if(s.il_uyumu_zorunlu!==null&&s.il_uyumu_zorunlu!==undefined)db.settings.ilUyumuZorunlu=s.il_uyumu_zorunlu;
+          if(s.ilce_uyumu_zorunlu!==null&&s.ilce_uyumu_zorunlu!==undefined)db.settings.ilceUyumuZorunlu=s.ilce_uyumu_zorunlu;
         }
         if(r[1].data){
           db.musteriler=r[1].data.map(function(m){
