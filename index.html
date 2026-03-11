@@ -735,7 +735,7 @@ function doLogin(){
         }
         if(r[1].data){
           db.musteriler=r[1].data.map(function(m){
-            return {id:m.id,agentId:m.agent_id,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:m.butce||'',il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum};
+            return {id:+m.id,agentId:+m.agent_id,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:+(m.butce||0),il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum};
           });
         }
         if(r[2].data){
@@ -1015,7 +1015,7 @@ function saveMusteri(){
       .then(function(res){
         if(res.error){showToast('Hata: '+res.error.message);return;}
         var m=res.data;
-        db.musteriler.unshift({id:m.id,agentId:m.agent_id,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:m.butce||'',il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum});
+        db.musteriler.unshift({id:+m.id,agentId:+m.agent_id,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:+(m.butce||0),il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum});
         closeModal('musteriModal');renderMusteriler();updateOnayBadge();
         musteriEditId=null;showToast('Müşteri kaydedildi.');
       });
@@ -1707,7 +1707,7 @@ document.addEventListener('DOMContentLoaded', function(){
         }
         if(r[1].data){
           db.musteriler=r[1].data.map(function(m){
-            return {id:m.id,agentId:m.agent_id,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:m.butce||'',il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum};
+            return {id:+m.id,agentId:+m.agent_id,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:+(m.butce||0),il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum};
           });
         }
         if(r[2].data){db.revealed=r[2].data.map(function(x){return {viewerId:x.viewer_id,targetId:x.target_id};});}
