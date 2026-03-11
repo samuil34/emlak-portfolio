@@ -259,10 +259,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    var supa = null;
-    window.addEventListener('load', function(){
-      supa = supabase.createClient('https://rqmmnjaarcpacmytifvj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbW1uamFhcmNwYWNteXRpZnZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTQ0NTIsImV4cCI6MjA4ODc5MDQ1Mn0.xp2R5-vHNwN-hNo0K6Le7jYKr4af2E8qmxArKqsWbp0');
-    });
+    var supa = supabase.createClient('https://rqmmnjaarcpacmytifvj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbW1uamFhcmNwYWNteXRpZnZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTQ0NTIsImV4cCI6MjA4ODc5MDQ1Mn0.xp2R5-vHNwN-hNo0K6Le7jYKr4af2E8qmxArKqsWbp0');
   </script>
 </head>
 <body>
@@ -1573,7 +1570,7 @@ setInterval(function(){if(currentUser)checkNewMatches();}, 30000);
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
 
 // Sayfa yenilenince oturumu geri yükle
-(function(){
+document.addEventListener('DOMContentLoaded', function(){
   var savedId=sessionStorage.getItem('userId');
   if(!savedId)return;
   supa.from('users').select('*').eq('id',savedId).single()
@@ -1609,7 +1606,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.get
         afterLogin(user, sessionStorage.getItem('lastPage')||'dashboard');
       });
     });
-})();
+});
 </script>
 </body>
 </html>
