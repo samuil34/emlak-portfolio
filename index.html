@@ -264,7 +264,13 @@ tr:hover td{background:rgba(255,255,255,.015);}
 </head>
 <body>
 
-<div id="loginScreen">
+<div id="loadingScreen" style="position:fixed;inset:0;background:#0f0e0c;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999">
+  <div style="font-family:'DM Serif Display',serif;font-size:28px;color:#c9a84c;letter-spacing:2px;margin-bottom:16px">Portföy</div>
+  <div style="width:36px;height:36px;border:3px solid #333;border-top-color:#c9a84c;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<div id="loginScreen" style="display:none">
   <div class="login-card">
     <div class="login-logo">Portföy</div>
     <div class="login-sub">Emlak Yönetim Sistemi</div>
@@ -646,6 +652,7 @@ function navTo(name){closeSidebar();showPage(name,null);}
 function afterLogin(user, targetPage){
   currentUser=user;
   sessionStorage.setItem('userId', user.id);
+  document.getElementById('loadingScreen').style.display='none';
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('sidebarName').textContent=user.name;
@@ -661,9 +668,10 @@ function doLogin(){
   var u=document.getElementById('loginUser').value.trim().toLowerCase();
   var p=document.getElementById('loginPass').value;
   document.getElementById('loginError').style.display='none';
+  document.getElementById('loadingScreen').style.display='flex';
   supa.from('users').select('*').eq('username',u).eq('password',p).single()
     .then(function(res){
-      if(res.error||!res.data){document.getElementById('loginError').style.display='block';return;}
+      if(res.error||!res.data){document.getElementById('loadingScreen').style.display='none';document.getElementById('loginScreen').style.display='flex';document.getElementById('loginError').style.display='block';return;}
       var user=res.data;
       user.credits=user.credits||0;
       Promise.all([
@@ -1572,7 +1580,11 @@ document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.get
 // Sayfa yenilenince oturumu geri yükle
 document.addEventListener('DOMContentLoaded', function(){
   var savedId=sessionStorage.getItem('userId');
-  if(!savedId)return;
+  if(!savedId){
+    document.getElementById('loadingScreen').style.display='none';
+    document.getElementById('loginScreen').style.display='flex';
+    return;
+  }
   supa.from('users').select('*').eq('id',savedId).single()
     .then(function(res){
       if(res.error||!res.data)return;
