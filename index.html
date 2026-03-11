@@ -276,7 +276,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
     <div class="login-sub">Emlak Yönetim Sistemi</div>
     <div class="error-msg" id="loginError">Kullanıcı adı veya şifre hatalı.</div>
     <div class="field-label">Kullanıcı Adı</div>
-    <input type="text" class="field-input" id="loginUser" placeholder="kullanici_adi" oninput="this.value=this.value.toLowerCase()" autocomplete="username">
+    <input type="text" class="field-input" id="loginUser" placeholder="kullanici_adi" oninput="this.value=this.value.replace(/[İ]/g,'i').replace(/[I]/g,'i').toLowerCase()" autocomplete="username">
     <div class="field-label">Şifre</div>
     <input type="password" class="field-input" id="loginPass" placeholder="••••••••" autocomplete="current-password">
     <button class="btn-primary" onclick="doLogin()">Giriş Yap</button>
@@ -655,13 +655,10 @@ function doLogin(){
   var p=document.getElementById('loginPass').value;
   document.getElementById('loginError').style.display='none';
   
-  supa.from('users').select('*').eq('username', u.toLowerCase()).eq('password', p).single()
-    .then(function(res){
-      if(res.error || !res.data){
-        document.getElementById('loginError').style.display='block';
-        return;
-      }
-      var user = res.data;
+  supa.from('users').select('*').then(function(res){
+      if(res.error){document.getElementById('loginError').style.display='block';return;}
+      var user=(res.data||[]).find(function(x){return x.username.toLowerCase()===u.toLowerCase()&&x.password===p;});
+      if(!user){document.getElementById('loginError').style.display='block';return;}
       // Map DB fields to app format
       user.credits = user.credits || 0;
       user.role = user.role || 'agent';
