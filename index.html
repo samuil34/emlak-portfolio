@@ -34,11 +34,19 @@ body.light{
 *{margin:0;padding:0;box-sizing:border-box;}
 @keyframes cardPulse{
   0%,100%{background:var(--surface);border-color:rgba(76,175,125,0.3);}
-  50%{background:rgba(76,175,125,0.22);border-color:rgba(76,175,125,0.9);}
+  50%{background:rgba(76,175,125,0.12);border-color:rgba(76,175,125,1);box-shadow:0 0 14px rgba(76,175,125,0.25);}
 }
 .has-match{
-  animation:cardPulse 1.8s ease-in-out infinite;
-  border:2px solid rgba(76,175,125,0.3)!important;
+  animation:cardPulse 2s ease-in-out infinite;
+  border:2px solid rgba(76,175,125,0.4)!important;
+  position:relative;
+}
+.has-match::after{
+  content:'✦ EŞLEŞİYOR';
+  position:absolute;top:-9px;right:10px;
+  font-size:9px;font-weight:700;letter-spacing:1px;
+  color:var(--green);background:var(--bg);padding:1px 7px;
+  border:1px solid rgba(76,175,125,0.4);
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
@@ -869,7 +877,21 @@ function renderEslesmeler(){
     var rev=isRevealed(m.id);
     html+='<div class="eslesme-card">';
     html+='<div class="eslesme-card-header"><div><span style="font-size:14px;font-weight:500">'+m.ad+'</span> '+tipBadge(m.tip)+' <span style="font-size:12px;color:var(--text-muted);margin-left:4px">'+m.ilce+'</span></div>'+matchBadge(m)+'</div>';
-    if(rev){matches.forEach(function(x){html+='<div class="eslesme-item">'+tipBadge(x.tip)+' <span style="margin-left:6px">'+x.ilce+' · ₺'+formatSayi(+(x.butce||0))+(x.not?' · '+x.not:'')+'</span></div>';});}
+    if(rev){matches.forEach(function(x){
+      var agAdı=agentName(x.agentId);
+      html+='<div class="eslesme-item" style="background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.25);margin-bottom:6px;padding:10px 12px;">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
+        tipBadge(x.tip)+
+        '<span style="font-size:10px;color:var(--gold-dim);letter-spacing:0.5px">EŞLEŞEN KAYIT</span>'+
+        '</div>'+
+        '<div style="font-size:12px;color:var(--text-dim);line-height:1.8">'+
+        (x.il?'📍 '+x.il+(x.ilce?' / '+x.ilce:'')+'<br>':'')+
+        '💰 ₺'+formatSayi(+(x.butce||0))+'<br>'+
+        (x.not?'📝 '+x.not+'<br>':'')+
+        '</div>'+
+        '<div style="margin-top:6px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:6px">👤 Danışman: '+agAdı+'</div>'+
+        '</div>';
+    });}
     html+='</div>';
   });
   if(toplam===0)html='<div style="text-align:center;padding:50px 20px;color:var(--text-muted)">Henüz eşleşme bulunamadı.<br><span style="font-size:12px">Müşterilerinizi ağa açarak eşleşme başlatın.</span></div>';
@@ -1208,6 +1230,9 @@ function renderSettings(){
   '<div class="setting-row"><div><div class="setting-label">Hak Satın Alma Aktif</div><div class="setting-desc">Danışmanlara paket satın alma menüsü görünsün</div></div><label class="toggle"><input type="checkbox" '+(s.hakSatinAlmaAktif?'checked':'')+' onchange="updateSetting(\'hakSatinAlmaAktif\',this.checked);applySettings()"><span class="toggle-slider"></span></label></div></div>'+
 
   '<div class="settings-card"><div class="settings-card-title">Eşleşme Kuralları</div>'+
+  '<div style="font-size:11px;color:var(--text-muted);padding:8px 0 14px;border-bottom:1px solid var(--border);margin-bottom:4px">'+
+  '🔵 Alıcı ↔ Satıcı &nbsp;&nbsp; 🟢 Kiralık Arayan ↔ Kiracı Arayan &nbsp;&nbsp; Sadece onaylı kayıtlar eşleşir.'+
+  '</div>'+
   '<div class="setting-row"><div><div class="setting-label">Aynı Danışman Eşleşsin</div><div class="setting-desc">Açık olursa bir danışmanın müşterileri kendi aralarında da eşleşir</div></div><label class="toggle"><input type="checkbox" '+(s.ayniDanismanEslesmeSin?'checked':'')+' onchange="updateSetting(\'ayniDanismanEslesmeSin\',this.checked)"><span class="toggle-slider"></span></label></div>'+
   '<div class="setting-row"><div><div class="setting-label">İl Uyumu Zorunlu</div><div class="setting-desc">Farklı illerdeki müşteriler eşleşmesin</div></div><label class="toggle"><input type="checkbox" '+(s.ilUyumuZorunlu?'checked':'')+' onchange="updateSetting(\'ilUyumuZorunlu\',this.checked)"><span class="toggle-slider"></span></label></div>'+
   '<div class="setting-row"><div><div class="setting-label">İlçe Uyumu Zorunlu</div><div class="setting-desc">Farklı ilçelerdeki müşteriler eşleşmesin</div></div><label class="toggle"><input type="checkbox" '+(s.ilceUyumuZorunlu?'checked':'')+' onchange="updateSetting(\'ilceUyumuZorunlu\',this.checked)"><span class="toggle-slider"></span></label></div>'+
@@ -1472,8 +1497,13 @@ function addToDesktop(){
 function showChangePassword(){
   var yeni=prompt('Yeni şifrenizi girin:');
   if(!yeni||yeni.length<3){showToast('En az 3 karakter olmalı.');return;}
-  currentUser.password=yeni;
-  showToast('Şifre güncellendi!');
+  supa.from('users').update({password:yeni}).eq('id',currentUser.id).then(function(res){
+    if(res.error){showToast('Hata: '+res.error.message);return;}
+    currentUser.password=yeni;
+    var u=db.users.find(function(x){return x.id===currentUser.id;});
+    if(u)u.password=yeni;
+    showToast('Şifre güncellendi!');
+  });
 }
 
 function showMatchDetail(id){
@@ -1544,8 +1574,13 @@ function addToDesktop(){
 function showChangePassword(){
   var yeni=prompt('Yeni şifrenizi girin:');
   if(!yeni||yeni.length<3){showToast('En az 3 karakter olmalı.');return;}
-  currentUser.password=yeni;
-  showToast('Şifre güncellendi!');
+  supa.from('users').update({password:yeni}).eq('id',currentUser.id).then(function(res){
+    if(res.error){showToast('Hata: '+res.error.message);return;}
+    currentUser.password=yeni;
+    var u=db.users.find(function(x){return x.id===currentUser.id;});
+    if(u)u.password=yeni;
+    showToast('Şifre güncellendi!');
+  });
 }
 
 function showMatchDetail(id){
