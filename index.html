@@ -261,6 +261,12 @@ tr:hover td{background:rgba(255,255,255,.015);}
 .onay-card-meta{font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6;}
 .onay-card-actions{display:flex;gap:6px;}
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPA_URL = 'https://rqmmnjaarpcacmytifvj.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbW1uamFhcmNwYWNteXRpZnZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTQ0NTIsImV4cCI6MjA4ODc5MDQ1Mn0.xp2R5-vHNwN-hNo0K6Le7jYKr4af2E8qmxArKqsWbp0';
+    const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+  </script>
 </head>
 <body>
 
@@ -647,18 +653,75 @@ function navTo(name){closeSidebar();showPage(name,null);}
 function doLogin(){
   var u=document.getElementById('loginUser').value.trim();
   var p=document.getElementById('loginPass').value;
-  var user=db.users.find(function(x){return x.username.toLowerCase()===u.toLowerCase()&&x.password===p;});
-  if(!user){document.getElementById('loginError').style.display='block';return;}
-  currentUser=user;
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('app').style.display='block';
-  document.getElementById('sidebarName').textContent=user.name;
-  document.getElementById('sidebarRole').textContent=user.role==='admin'?'YÖNETİCİ':'DANIŞMAN';
-  document.getElementById('sidebarSiteName').textContent=db.settings.siteName;
-  if(user.role==='admin'){document.getElementById('navAdmin').style.display='flex';document.getElementById('creditsBar').style.display='none';}
-  document.getElementById('topDate').textContent=new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
-  updateCreditsBar();applySettings();updateOnayBadge();
-  showPage('dashboard',null);
+  document.getElementById('loginError').style.display='none';
+  
+  supa.from('users').select('*').eq('username', u.toLowerCase()).eq('password', p).single()
+    .then(function(res){
+      if(res.error || !res.data){
+        document.getElementById('loginError').style.display='block';
+        return;
+      }
+      var user = res.data;
+      // Map DB fields to app format
+      user.credits = user.credits || 0;
+      user.role = user.role || 'agent';
+      currentUser = user;
+      
+      // Load settings and musteriler
+      Promise.all([
+        supa.from('settings').select('*').eq('id',1).single(),
+        supa.from('musteriler').select('*'),
+        supa.from('revealed').select('*').eq('viewer_id', user.id),
+        supa.from('users').select('*')
+      ]).then(function(results){
+        var sets = results[0].data;
+        if(sets){
+          db.settings.siteName = sets.site_name;
+          db.settings.paketFiyat = sets.paket_fiyat;
+          db.settings.paketHak = sets.paket_hak;
+          db.settings.baslamHakki = sets.baslam_hakki;
+          db.settings.eslesmeMaliyeti = sets.eslesme_maliyeti;
+          db.settings.showMatchCount = sets.show_match_count;
+          db.settings.kiralikKategoriAktif = sets.kiralik_aktif;
+          db.settings.maxMusteri = sets.max_musteri;
+        }
+        if(results[1].data){
+          db.musteriler = results[1].data.map(function(m){
+            return {
+              id: m.id,
+              agentId: m.agent_id,
+              ad: m.ad,
+              tel: m.tel||'',
+              tip: m.tip,
+              butce: m.butce||'',
+              il: m.il||'',
+              ilce: m.ilce||'',
+              not: m.not_||'',
+              gorunum: m.gorunum,
+              durum: m.durum
+            };
+          });
+        }
+        if(results[2].data){
+          db.revealed = results[2].data.map(function(r){
+            return {viewerId: r.viewer_id, targetId: r.target_id};
+          });
+        }
+        if(results[3].data){
+          db.users = results[3].data;
+        }
+        
+        document.getElementById('loginScreen').style.display='none';
+        document.getElementById('app').style.display='block';
+        document.getElementById('sidebarName').textContent=user.name;
+        document.getElementById('sidebarRole').textContent=user.role==='admin'?'YÖNETİCİ':'DANIŞMAN';
+        document.getElementById('sidebarSiteName').textContent=db.settings.siteName;
+        if(user.role==='admin'){document.getElementById('navAdmin').style.display='flex';document.getElementById('creditsBar').style.display='none';}
+        document.getElementById('topDate').textContent=new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+        updateCreditsBar();applySettings();updateOnayBadge();
+        showPage('dashboard',null);
+      });
+    });
 }
 
 function doLogout(){
@@ -737,13 +800,17 @@ function toggleGorunum(id){
   if(!m||(m.agentId!==currentUser.id&&currentUser.role!=='admin'))return;
   if(m.gorunum==='gizli'){
     showConfirm('👥','Ağa Açılsın mı?','Bu müşteri diğer danışmanlara görünür hale gelecek.',function(){
-      m.gorunum='acik';m.durum='beklemede';showToast('Kaydedildi.');
-      updateOnayBadge();renderCurrentPage();
+      supa.from('musteriler').update({gorunum:'acik',durum:'beklemede'}).eq('id',id).then(function(){
+        m.gorunum='acik';m.durum='beklemede';showToast('Kaydedildi.');
+        updateOnayBadge();renderCurrentPage();
+      });
     });
   } else {
     showConfirm('🔒','Gizlensin mi?','Bu müşteri sadece siz göreceksiniz, ağdan kaldırılacak.',function(){
-      m.gorunum='gizli';m.durum='onaylandi';showToast('Gizli yapıldı.');
-      updateOnayBadge();renderCurrentPage();
+      supa.from('musteriler').update({gorunum:'gizli',durum:'onaylandi'}).eq('id',id).then(function(){
+        m.gorunum='gizli';m.durum='onaylandi';showToast('Gizli yapıldı.');
+        updateOnayBadge();renderCurrentPage();
+      });
     });
   }
 }
@@ -901,7 +968,13 @@ function saveMusteri(){
   showToast('Müşteri kaydedildi.');
 }
 
-function deleteMusteri(id){showConfirm('🗑','Silinsin mi?','Bu müşteri kalıcı olarak silinecek.',function(){db.musteriler=db.musteriler.filter(function(m){return m.id!==id;});renderMusteriler();updateOnayBadge();showToast('Müşteri silindi.');});}
+function deleteMusteri(id){showConfirm('🗑','Silinsin mi?','Bu müşteri kalıcı olarak silinecek.',function(){
+    supa.from('musteriler').delete().eq('id',id).then(function(res){
+      if(res.error){showToast('Hata!');return;}
+      db.musteriler=db.musteriler.filter(function(m){return m.id!==id;});
+      renderMusteriler();updateOnayBadge();showToast('Müşteri silindi.');
+    });
+  });}
 
 function satinAl(){var user=db.users.find(function(u){return u.id===currentUser.id;});user.credits+=db.settings.paketHak;currentUser.credits=user.credits;updateCreditsBar();showToast(db.settings.paketHak+' hak eklendi! Toplam: '+user.credits);}
 
