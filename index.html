@@ -386,7 +386,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
         </div>
         <div id="admin-danismanlar" style="display:none">
           <div class="section-header"><div class="section-title">Danışman Listesi</div><button class="btn-add" onclick="openDanismanModal()">+ Ekle</button></div>
-          <div class="table-wrap"><table><thead><tr><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>Telefon</th><th>Müşteri</th><th>Hak</th><th>İşlem</th></tr></thead><tbody id="adminDanismanTable"></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>Şifre</th><th>Telefon</th><th>Müşteri</th><th>Hak</th><th>İşlem</th></tr></thead><tbody id="adminDanismanTable"></tbody></table></div>
           <div class="card-list" id="adminDanismanCards"></div>
         </div>
         <div id="admin-tumMusteriler" style="display:none">
@@ -646,8 +646,9 @@ function openSidebar(){document.getElementById('sidebar').classList.add('open');
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
 function navTo(name){closeSidebar();showPage(name,null);}
 
-function afterLogin(user){
+function afterLogin(user, targetPage){
   currentUser=user;
+  sessionStorage.setItem('userId', user.id);
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('sidebarName').textContent=user.name;
@@ -656,7 +657,7 @@ function afterLogin(user){
   if(user.role==='admin'){document.getElementById('navAdmin').style.display='flex';document.getElementById('creditsBar').style.display='none';}
   document.getElementById('topDate').textContent=new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
   updateCreditsBar();applySettings();updateOnayBadge();
-  showPage('dashboard',null);
+  showPage(targetPage||'dashboard',null);
 }
 
 function doLogin(){
@@ -694,7 +695,7 @@ function doLogin(){
           db.revealed=r[2].data.map(function(x){return {viewerId:x.viewer_id,targetId:x.target_id};});
         }
         if(r[3].data){db.users=r[3].data;}
-        afterLogin(user);
+        afterLogin(user, sessionStorage.getItem('lastPage')||'dashboard');
       });
     });
 }
@@ -726,6 +727,7 @@ function applySettings(){
 }
 
 function showPage(name,el){
+  if(currentUser)sessionStorage.setItem('lastPage',name);
   currentPageName=name;
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
@@ -992,13 +994,14 @@ function renderAdminSection(name){
     var agents=db.users.filter(function(u){return u.role==='agent';});
     document.getElementById('adminDanismanTable').innerHTML=agents.map(function(a){
       var mC=db.musteriler.filter(function(m){return m.agentId===a.id;}).length;
-      return '<tr><td>'+a.name+'</td><td style="color:var(--text-muted)">'+a.username+'</td><td>'+a.tel+'</td><td>'+mC+'</td><td style="color:var(--gold)">'+a.credits+'</td><td><button class="btn-sm" onclick="addCreditsAdmin('+a.id+')">+ Hak</button><button class="btn-sm danger" onclick="deleteDanisman('+a.id+')">Sil</button></td></tr>';
+      return '<tr><td>'+a.name+'</td><td style="color:var(--text-muted)">'+a.username+'</td><td style="color:var(--text-muted);font-family:monospace">'+a.password+'</td><td>'+a.tel+'</td><td>'+mC+'</td><td style="color:var(--gold)">'+a.credits+'</td><td><button class="btn-sm" onclick="editDanisman('+a.id+')">Düzenle</button><button class="btn-sm" onclick="addCreditsAdmin('+a.id+')">+ Hak</button><button class="btn-sm danger" onclick="deleteDanisman('+a.id+')">Sil</button></td></tr>';
     }).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">Danışman yok</td></tr>';
     document.getElementById('adminDanismanCards').innerHTML=agents.map(function(a){
       var mC=db.musteriler.filter(function(m){return m.agentId===a.id;}).length;
       return '<div class="m-card"><div class="m-card-header"><span class="m-card-name">'+a.name+'</span><span style="color:var(--gold);font-family:\'DM Serif Display\',serif;font-size:18px">'+a.credits+' hak</span></div>'+
-      '<div class="m-card-meta">@'+a.username+' · '+a.tel+' · '+mC+' müşteri</div>'+
-      '<div class="m-card-footer"><div></div><div class="m-card-actions"><button class="btn-sm" onclick="addCreditsAdmin('+a.id+')">+ Hak</button><button class="btn-sm danger" onclick="deleteDanisman('+a.id+')">Sil</button></div></div></div>';
+      '<div class="m-card-meta">@'+a.username+' · 🔑 '+a.password+'</div>'+
+      '<div class="m-card-meta">'+a.tel+' · '+mC+' müşteri</div>'+
+      '<div class="m-card-footer"><div></div><div class="m-card-actions"><button class="btn-sm" onclick="editDanisman('+a.id+')">Düzenle</button><button class="btn-sm" onclick="addCreditsAdmin('+a.id+')">+ Hak</button><button class="btn-sm danger" onclick="deleteDanisman('+a.id+')">Sil</button></div></div></div>';
     }).join('')||'<div style="text-align:center;padding:30px;color:var(--text-muted)">Danışman yok</div>';
   }
   if(name==='tumMusteriler'){
@@ -1028,7 +1031,26 @@ function addCreditsAdmin(agentId){
   showToast(u.name+' hesabına '+n+' hak eklendi.');renderAdminSection('danismanlar');
 }
 
-function openDanismanModal(){['dAd','dUser','dPass','dTel'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('danismanModal').classList.add('open');}
+var danismanEditId=null;
+
+function openDanismanModal(){
+  danismanEditId=null;
+  ['dAd','dUser','dPass','dTel'].forEach(function(id){document.getElementById(id).value='';});
+  document.querySelector('#danismanModal .modal-title').textContent='Danışman Ekle';
+  document.getElementById('danismanModal').classList.add('open');
+}
+
+function editDanisman(id){
+  var a=db.users.find(function(u){return u.id===id;});
+  if(!a)return;
+  danismanEditId=id;
+  document.getElementById('dAd').value=a.name||'';
+  document.getElementById('dUser').value=a.username||'';
+  document.getElementById('dPass').value=a.password||'';
+  document.getElementById('dTel').value=a.tel||'';
+  document.querySelector('#danismanModal .modal-title').textContent='Danışmanı Düzenle';
+  document.getElementById('danismanModal').classList.add('open');
+}
 
 function saveDanisman(){
   var ad=document.getElementById('dAd').value.trim();
@@ -1036,14 +1058,30 @@ function saveDanisman(){
   var pass=document.getElementById('dPass').value;
   var tel=document.getElementById('dTel').value.trim();
   if(!ad||!user||!pass){showToast('Ad, kullanıcı adı ve şifre zorunludur.');return;}
-  if(db.users.find(function(u){return u.username.toLowerCase()===user;})){showToast('Bu kullanıcı adı alınmış.');return;}
-  supa.from('users').insert({username:user,password:pass,name:ad,role:'agent',tel:tel,credits:db.settings.baslamHakki}).select().single()
-    .then(function(res){
-      if(res.error){showToast('Hata: '+res.error.message);return;}
-      db.users.push(res.data);
-      closeModal('danismanModal');renderAdmin();
-      showToast(ad+' eklendi. '+db.settings.baslamHakki+' başlangıç hakkı verildi.');
-    });
+  if(danismanEditId){
+    // Düzenleme modu
+    var dup=db.users.find(function(u){return u.username.toLowerCase()===user&&u.id!==danismanEditId;});
+    if(dup){showToast('Bu kullanıcı adı alınmış.');return;}
+    supa.from('users').update({username:user,password:pass,name:ad,tel:tel}).eq('id',danismanEditId)
+      .then(function(res){
+        if(res.error){showToast('Hata: '+res.error.message);return;}
+        var a=db.users.find(function(u){return u.id===danismanEditId;});
+        if(a){a.name=ad;a.username=user;a.password=pass;a.tel=tel;}
+        danismanEditId=null;
+        closeModal('danismanModal');renderAdmin();showToast('Güncellendi.');
+      });
+  } else {
+    // Yeni ekleme
+    if(db.users.find(function(u){return u.username.toLowerCase()===user;})){showToast('Bu kullanıcı adı alınmış.');return;}
+    supa.from('users').insert({username:user,password:pass,name:ad,role:'agent',tel:tel,credits:db.settings.baslamHakki}).select().single()
+      .then(function(res){
+        if(res.error){showToast('Hata: '+res.error.message);return;}
+        db.users.push(res.data);
+        danismanEditId=null;
+        closeModal('danismanModal');renderAdmin();
+        showToast(ad+' eklendi. '+db.settings.baslamHakki+' başlangıç hakkı verildi.');
+      });
+  }
 }
 
 function openAddDanismanModal(){
@@ -1533,6 +1571,45 @@ setInterval(function(){if(currentUser)checkNewMatches();}, 30000);
 })();
 
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
+
+// Sayfa yenilenince oturumu geri yükle
+(function(){
+  var savedId=sessionStorage.getItem('userId');
+  if(!savedId)return;
+  supa.from('users').select('*').eq('id',savedId).single()
+    .then(function(res){
+      if(res.error||!res.data)return;
+      var user=res.data;
+      user.credits=user.credits||0;
+      Promise.all([
+        supa.from('settings').select('*').eq('id',1).single(),
+        supa.from('musteriler').select('*'),
+        supa.from('revealed').select('*').eq('viewer_id',user.id),
+        supa.from('users').select('*')
+      ]).then(function(r){
+        if(r[0].data){
+          var s=r[0].data;
+          if(s.site_name)db.settings.siteName=s.site_name;
+          if(s.paket_fiyat)db.settings.paketFiyat=s.paket_fiyat;
+          if(s.paket_hak)db.settings.paketHak=s.paket_hak;
+          if(s.baslam_hakki)db.settings.baslamHakki=s.baslam_hakki;
+          if(s.eslesme_maliyeti)db.settings.eslesmeMaliyeti=s.eslesme_maliyeti;
+          if(s.show_match_count!==null&&s.show_match_count!==undefined)db.settings.showMatchCount=s.show_match_count;
+          if(s.kiralik_aktif!==null&&s.kiralik_aktif!==undefined)db.settings.kiralikKategoriAktif=s.kiralik_aktif;
+          if(s.max_musteri!==null)db.settings.maxMusteri=s.max_musteri;
+          if(s.hak_satinalma_aktif!==null&&s.hak_satinalma_aktif!==undefined)db.settings.hakSatinAlmaAktif=s.hak_satinalma_aktif;
+        }
+        if(r[1].data){
+          db.musteriler=r[1].data.map(function(m){
+            return {id:m.id,agentId:m.agent_id,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:m.butce||'',il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum};
+          });
+        }
+        if(r[2].data){db.revealed=r[2].data.map(function(x){return {viewerId:x.viewer_id,targetId:x.target_id};});}
+        if(r[3].data){db.users=r[3].data;}
+        afterLogin(user, sessionStorage.getItem('lastPage')||'dashboard');
+      });
+    });
+})();
 </script>
 </body>
 </html>
