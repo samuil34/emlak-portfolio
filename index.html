@@ -7,10 +7,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Portföy">
   <meta name="theme-color" content="#0f0e0c">
-  <meta name="application-name" content="Portföy">
-  <meta name="apple-mobile-web-app-title" content="Portföy">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%230f0e0c'/><text x='50%25' y='54%25' font-size='300' text-anchor='middle' dominant-baseline='middle'>🏠</text></svg>">
-  <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Portf%C3%B6y%22%2C%22short_name%22%3A%22Portf%C3%B6y%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f0e0c%22%2C%22theme_color%22%3A%22%230f0e0c%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20512%20512'%3E%3Crect%20width%3D'512'%20height%3D'512'%20fill%3D'%230f0e0c'%2F%3E%3Ctext%20x%3D'50%2525'%20y%3D'54%2525'%20font-size%3D'300'%20text-anchor%3D'middle'%20dominant-baseline%3D'middle'%3E%F0%9F%8F%A0%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portföy — Emlak Yönetim Sistemi</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
@@ -263,13 +259,24 @@ tr:hover td{background:rgba(255,255,255,.015);}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPA_URL = 'https://rqmmnjaarpcacmytifvj.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbW1uamFhcmNwYWNteXRpZnZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTQ0NTIsImV4cCI6MjA4ODc5MDQ1Mn0.xp2R5-vHNwN-hNo0K6Le7jYKr4af2E8qmxArKqsWbp0';
-    const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+    var supa = null;
+    window.addEventListener('load', function(){
+      supa = supabase.createClient('https://rqmmnjaarcpacmytifvj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbW1uamFhcmNwYWNteXRpZnZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTQ0NTIsImV4cCI6MjA4ODc5MDQ1Mn0.xp2R5-vHNwN-hNo0K6Le7jYKr4af2E8qmxArKqsWbp0');
+    });
   </script>
 </head>
 <body>
 
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Portföy</div>
+    <div class="login-sub">Emlak Yönetim Sistemi</div>
+    <div class="error-msg" id="loginError">Kullanıcı adı veya şifre hatalı.</div>
+    <div class="field-label">Kullanıcı Adı</div>
+    <input type="text" class="field-input" id="loginUser" placeholder="kullanici_adi" oninput="this.value=this.value.toLowerCase()" autocomplete="username">
+    <div class="field-label">Şifre</div>
+    <input type="password" class="field-input" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn-primary" onclick="doLogin()">Giriş Yap</button>
 
   </div>
 </div>
@@ -293,7 +300,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
       <div class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')"><span class="nav-icon">◈</span> Panel</div>
       <div class="nav-item" data-page="musteriler" onclick="navTo('musteriler')"><span class="nav-icon">◉</span> Müşteriler</div>
       <div class="nav-item" data-page="eslesmeler" onclick="navTo('eslesmeler')"><span class="nav-icon">◎</span> Eşleşmeler</div>
-      <div class="nav-item" id="navPaket" data-page="paket" onclick="navTo('paket')"><span class="nav-icon">◇</span> Hak Satın Al</div>
+      <div class="nav-item" data-page="paket" onclick="navTo('paket')"><span class="nav-icon">◇</span> Hak Satın Al</div>
       <div class="nav-item" data-page="ayarlar" onclick="navTo('ayarlar')"><span class="nav-icon">⚙</span> Ayarlar</div>
       <div class="nav-item" id="navAdmin" data-page="admin" onclick="navTo('admin')" style="display:none"><span class="nav-icon">◆</span> Yönetim <span class="admin-badge">Admin</span><span class="nav-badge" id="onayBadge" style="display:none">0</span></div>
     </nav>
@@ -542,20 +549,9 @@ tr:hover td{background:rgba(255,255,255,.015);}
 
 <script>
 var db={
-  settings:{siteName:'Portföy',paketFiyat:200,paketHak:10,baslamHakki:3,eslesmeHakMaliyeti:1,eslemeSayisiGorunsun:true,kiralikKategoriAktif:true,maxMusteri:0,adminPaketGorunsun:false,iller:{'Gaziantep':['Şahinbey','Şehitkamil','Nizip','İslahiye','Nurdağı','Oğuzeli','Araban','Yavuzeli','Karkamış'],'Adıyaman':['Merkez','Besni','Çelikhan','Gerger','Gölbaşı','Kahta','Samsat','Sincik','Tut'],'Adana':['Seyhan','Çukurova','Yüreğir','Sarıçam','Ceyhan','İmamoğlu','Kozan','Tufanbeyli','Pozantı'],'İstanbul':['Kadıköy','Beşiktaş','Şişli','Üsküdar','Fatih','Beyoğlu','Bakırköy','Maltepe','Ataşehir'],'Ankara':['Çankaya','Keçiören','Yenimahalle','Mamak','Etimesgut','Sincan','Altındağ','Pursaklar','Gölbaşı'],'İzmir':['Bornova','Buca','Konak','Karşıyaka','Çiğli','Gaziemir','Karabağlar','Narlıdere','Balçova']}},
-  users:[
-    {id:1,username:'admin',password:'admin123',name:'Admin',role:'admin',tel:'05001234567',credits:999},
-    {id:2,username:'ahmet',password:'1234',name:'Ahmet Demir',role:'agent',tel:'05321112233',credits:5},
-    {id:3,username:'fatma',password:'1234',name:'Fatma Çelik',role:'agent',tel:'05449876543',credits:3}
-  ],
-  musteriler:[
-    {id:1,agentId:2,ad:'Kemal Yıldız',tel:'05551112233',tip:'alici',butce:'2500000',il:'Gaziantep',ilce:'Şahinbey',not:'3+1 istiyor',gorunum:'acik',durum:'onaylandi'},
-    {id:2,agentId:2,ad:'Selin Arslan',tel:'05442223344',tip:'satici',butce:'1800000',il:'Gaziantep',ilce:'Şehitkamil',not:'Acil satış',gorunum:'gizli',durum:'onaylandi'},
-    {id:3,agentId:3,ad:'Murat Koç',tel:'05333334455',tip:'alici',butce:'4000000',il:'Gaziantep',ilce:'Şahinbey',not:'Villa bakıyor',gorunum:'acik',durum:'onaylandi'},
-    {id:4,agentId:3,ad:'Ayşe Kara',tel:'05224445566',tip:'satici',butce:'3200000',il:'Gaziantep',ilce:'Nizip',not:'',gorunum:'acik',durum:'beklemede'},
-    {id:5,agentId:2,ad:'Hasan Öztürk',tel:'05116667788',tip:'kiralik',butce:'8000',il:'Gaziantep',ilce:'Şahinbey',not:'2+1 yeterli',gorunum:'acik',durum:'onaylandi'},
-    {id:6,agentId:3,ad:'Zeynep Aydın',tel:'05007778899',tip:'kiraci',butce:'7500',il:'Gaziantep',ilce:'Şahinbey',not:'Eşyalı tercih',gorunum:'acik',durum:'onaylandi'}
-  ],
+  settings:{siteName:'Portföy',paketFiyat:200,paketHak:10,baslamHakki:3,eslesmeHakMaliyeti:1,eslemeSayisiGorunsun:true,kiralikKategoriAktif:true,maxMusteri:0,iller:{'Gaziantep':['Şahinbey','Şehitkamil','Nizip','İslahiye','Nurdağı','Oğuzeli','Araban','Yavuzeli','Karkamış'],'Adıyaman':['Merkez','Besni','Çelikhan','Gerger','Gölbaşı','Kahta','Samsat','Sincik','Tut'],'Adana':['Seyhan','Çukurova','Yüreğir','Sarıçam','Ceyhan','İmamoğlu','Kozan','Tufanbeyli','Pozantı'],'İstanbul':['Kadıköy','Beşiktaş','Şişli','Üsküdar','Fatih','Beyoğlu','Bakırköy','Maltepe','Ataşehir'],'Ankara':['Çankaya','Keçiören','Yenimahalle','Mamak','Etimesgut','Sincan','Altındağ','Pursaklar','Gölbaşı'],'İzmir':['Bornova','Buca','Konak','Karşıyaka','Çiğli','Gaziemir','Karabağlar','Narlıdere','Balçova']}},
+  users:[],
+  musteriler:[],
   revealed:[],
   nextId:{user:4,musteri:7}
 };
@@ -635,78 +631,55 @@ function openSidebar(){document.getElementById('sidebar').classList.add('open');
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
 function navTo(name){closeSidebar();showPage(name,null);}
 
+function afterLogin(user){
+  currentUser=user;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('sidebarName').textContent=user.name;
+  document.getElementById('sidebarRole').textContent=user.role==='admin'?'YÖNETİCİ':'DANIŞMAN';
+  document.getElementById('sidebarSiteName').textContent=db.settings.siteName;
+  if(user.role==='admin'){document.getElementById('navAdmin').style.display='flex';document.getElementById('creditsBar').style.display='none';}
+  document.getElementById('topDate').textContent=new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+  updateCreditsBar();applySettings();updateOnayBadge();
+  showPage('dashboard',null);
+}
+
 function doLogin(){
-  var u=document.getElementById('loginUser').value.trim();
+  var u=document.getElementById('loginUser').value.trim().toLowerCase();
   var p=document.getElementById('loginPass').value;
   document.getElementById('loginError').style.display='none';
-  
-  supa.from('users').select('*').then(function(res){
-      if(res.error){document.getElementById('loginError').style.display='block';return;}
-      var user=(res.data||[]).find(function(x){return x.username.toLowerCase()===u.toLowerCase()&&x.password===p;});
-      if(!user){document.getElementById('loginError').style.display='block';return;}
-      // Map DB fields to app format
-      user.credits = user.credits || 0;
-      user.role = user.role || 'agent';
-      currentUser = user;
-      
-      // Load settings and musteriler
+  supa.from('users').select('*').eq('username',u).eq('password',p).single()
+    .then(function(res){
+      if(res.error||!res.data){document.getElementById('loginError').style.display='block';return;}
+      var user=res.data;
+      user.credits=user.credits||0;
       Promise.all([
-        supa.from('settings').select('*').eq('id',1).maybeSingle(),
+        supa.from('settings').select('*').eq('id',1).single(),
         supa.from('musteriler').select('*'),
-        supa.from('revealed').select('*').eq('viewer_id', user.id),
+        supa.from('revealed').select('*').eq('viewer_id',user.id),
         supa.from('users').select('*')
-      ]).then(function(results){
-        var sets = results[0].data;
-        if(sets){
-          db.settings.siteName = sets.site_name;
-          db.settings.paketFiyat = sets.paket_fiyat;
-          db.settings.paketHak = sets.paket_hak;
-          db.settings.baslamHakki = sets.baslam_hakki;
-          db.settings.eslesmeMaliyeti = sets.eslesme_maliyeti;
-          db.settings.showMatchCount = sets.show_match_count;
-          db.settings.kiralikKategoriAktif = sets.kiralik_aktif;
-          db.settings.maxMusteri = sets.max_musteri;
+      ]).then(function(r){
+        if(r[0].data){
+          var s=r[0].data;
+          db.settings.siteName=s.site_name||db.settings.siteName;
+          db.settings.paketFiyat=s.paket_fiyat||db.settings.paketFiyat;
+          db.settings.paketHak=s.paket_hak||db.settings.paketHak;
+          db.settings.baslamHakki=s.baslam_hakki||db.settings.baslamHakki;
+          db.settings.eslesmeMaliyeti=s.eslesme_maliyeti||db.settings.eslesmeMaliyeti;
+          if(s.show_match_count!==null&&s.show_match_count!==undefined)db.settings.showMatchCount=s.show_match_count;
+          if(s.kiralik_aktif!==null&&s.kiralik_aktif!==undefined)db.settings.kiralikKategoriAktif=s.kiralik_aktif;
+          if(s.max_musteri!==null&&s.max_musteri!==undefined)db.settings.maxMusteri=s.max_musteri;
         }
-        if(results[1].data){
-          db.musteriler = results[1].data.map(function(m){
-            return {
-              id: m.id,
-              agentId: m.agent_id,
-              ad: m.ad,
-              tel: m.tel||'',
-              tip: m.tip,
-              butce: m.butce||'',
-              il: m.il||'',
-              ilce: m.ilce||'',
-              not: m.not_||'',
-              gorunum: m.gorunum,
-              durum: m.durum
-            };
+        if(r[1].data){
+          db.musteriler=r[1].data.map(function(m){
+            return {id:m.id,agentId:m.agent_id,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:m.butce||'',il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum};
           });
         }
-        if(results[2].data){
-          db.revealed = results[2].data.map(function(r){
-            return {viewerId: r.viewer_id, targetId: r.target_id};
-          });
+        if(r[2].data){
+          db.revealed=r[2].data.map(function(x){return {viewerId:x.viewer_id,targetId:x.target_id};});
         }
-        if(results[3].data){
-          db.users = results[3].data;
-        }
-        
-        document.getElementById('loginScreen').style.display='none';
-        document.getElementById('app').style.display='block';
-        document.getElementById('sidebarName').textContent=user.name;
-        document.getElementById('sidebarRole').textContent=user.role==='admin'?'YÖNETİCİ':'DANIŞMAN';
-        document.getElementById('sidebarSiteName').textContent=db.settings.siteName;
-        if(user.role==='admin'){
-          document.getElementById('navAdmin').style.display='flex';
-          document.getElementById('creditsBar').style.display='none';
-          var np=document.getElementById('navPaket');
-          if(np) np.style.display = db.settings.adminPaketGorunsun ? 'flex' : 'none';
-        }
-        document.getElementById('topDate').textContent=new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
-        updateCreditsBar();applySettings();updateOnayBadge();
-        showPage('dashboard',null);
+        if(r[3].data){db.users=r[3].data;}
+        afterLogin(user);
       });
     });
 }
@@ -787,17 +760,11 @@ function toggleGorunum(id){
   if(!m||(m.agentId!==currentUser.id&&currentUser.role!=='admin'))return;
   if(m.gorunum==='gizli'){
     showConfirm('👥','Ağa Açılsın mı?','Bu müşteri diğer danışmanlara görünür hale gelecek.',function(){
-      supa.from('musteriler').update({gorunum:'acik',durum:'beklemede'}).eq('id',id).then(function(){
-        m.gorunum='acik';m.durum='beklemede';showToast('Kaydedildi.');
-        updateOnayBadge();renderCurrentPage();
-      });
+      supa.from('musteriler').update({gorunum:'acik',durum:'beklemede'}).eq('id',id).then(function(){m.gorunum='acik';m.durum='beklemede';showToast('Kaydedildi.');updateOnayBadge();renderCurrentPage();});
     });
   } else {
     showConfirm('🔒','Gizlensin mi?','Bu müşteri sadece siz göreceksiniz, ağdan kaldırılacak.',function(){
-      supa.from('musteriler').update({gorunum:'gizli',durum:'onaylandi'}).eq('id',id).then(function(){
-        m.gorunum='gizli';m.durum='onaylandi';showToast('Gizli yapıldı.');
-        updateOnayBadge();renderCurrentPage();
-      });
+      supa.from('musteriler').update({gorunum:'gizli',durum:'onaylandi'}).eq('id',id).then(function(){m.gorunum='gizli';m.durum='onaylandi';showToast('Gizli yapıldı.');updateOnayBadge();renderCurrentPage();});
     });
   }
 }
@@ -942,26 +909,37 @@ function saveMusteri(){
   if(!musteriEditId&&s.maxMusteri>0&&myMusteriler().length>=s.maxMusteri){showToast('Müşteri limitine ulaştınız.');return;}
   var gorunum=document.getElementById('mGorunum').value;
   var durum=gorunum==='acik'?'beklemede':'onaylandi';
+  var tel=document.getElementById('mTel').value;
+  var tip=document.getElementById('mTip').value;
+  var il=document.getElementById('mIl').value;
+  var ilce=document.getElementById('mIlce').value;
+  var not_=document.getElementById('mNot').value;
   if(musteriEditId){
     var m=db.musteriler.find(function(x){return x.id===musteriEditId;});
     var eskiG=m.gorunum;
-    m.ad=ad;m.tel=document.getElementById('mTel').value;m.tip=document.getElementById('mTip').value;m.butce=getRawButce();m.il=document.getElementById('mIl').value;m.ilce=document.getElementById('mIlce').value;m.not=document.getElementById('mNot').value;m.gorunum=gorunum;
-    if(gorunum==='acik'&&eskiG==='gizli')m.durum='beklemede';
-    else if(gorunum==='gizli')m.durum='onaylandi';
+    var newDurum=m.durum;
+    if(gorunum==='acik'&&eskiG==='gizli')newDurum='beklemede';
+    else if(gorunum==='gizli')newDurum='onaylandi';
+    supa.from('musteriler').update({ad:ad,tel:tel,tip:tip,butce:rawB,il:il,ilce:ilce,not_:not_,gorunum:gorunum,durum:newDurum}).eq('id',musteriEditId)
+      .then(function(res){
+        if(res.error){showToast('Hata: '+res.error.message);return;}
+        m.ad=ad;m.tel=tel;m.tip=tip;m.butce=rawB;m.il=il;m.ilce=ilce;m.not=not_;m.gorunum=gorunum;m.durum=newDurum;
+        closeModal('musteriModal');renderMusteriler();updateOnayBadge();
+        musteriEditId=null;showToast('Müşteri kaydedildi.');
+      });
   } else {
-    db.musteriler.push({id:db.nextId.musteri++,agentId:currentUser.id,ad:ad,tel:document.getElementById('mTel').value,tip:document.getElementById('mTip').value,butce:getRawButce(),il:document.getElementById('mIl').value,ilce:document.getElementById('mIlce').value,not:document.getElementById('mNot').value,gorunum:gorunum,durum:durum});
+    supa.from('musteriler').insert({agent_id:currentUser.id,ad:ad,tel:tel,tip:tip,butce:rawB,il:il,ilce:ilce,not_:not_,gorunum:gorunum,durum:durum}).select().single()
+      .then(function(res){
+        if(res.error){showToast('Hata: '+res.error.message);return;}
+        var m=res.data;
+        db.musteriler.unshift({id:m.id,agentId:m.agent_id,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:m.butce||'',il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum});
+        closeModal('musteriModal');renderMusteriler();updateOnayBadge();
+        musteriEditId=null;showToast('Müşteri kaydedildi.');
+      });
   }
-  closeModal('musteriModal');renderMusteriler();updateOnayBadge();
-  showToast('Müşteri kaydedildi.');
 }
 
-function deleteMusteri(id){showConfirm('🗑','Silinsin mi?','Bu müşteri kalıcı olarak silinecek.',function(){
-    supa.from('musteriler').delete().eq('id',id).then(function(res){
-      if(res.error){showToast('Hata!');return;}
-      db.musteriler=db.musteriler.filter(function(m){return m.id!==id;});
-      renderMusteriler();updateOnayBadge();showToast('Müşteri silindi.');
-    });
-  });}
+function deleteMusteri(id){showConfirm('🗑','Silinsin mi?','Bu müşteri kalıcı olarak silinecek.',function(){supa.from('musteriler').delete().eq('id',id).then(function(res){if(res.error){showToast('Hata!');return;}db.musteriler=db.musteriler.filter(function(m){return m.id!==id;});renderMusteriler();updateOnayBadge();showToast('Müşteri silindi.');});});}
 
 function satinAl(){var user=db.users.find(function(u){return u.id===currentUser.id;});user.credits+=db.settings.paketHak;currentUser.credits=user.credits;updateCreditsBar();showToast(db.settings.paketHak+' hak eklendi! Toplam: '+user.credits);}
 
@@ -1056,8 +1034,7 @@ function renderSettings(){
 
   '<div class="settings-card"><div class="settings-card-title">Görünürlük</div>'+
   '<div class="setting-row"><div><div class="setting-label">Eşleşme Sayısı Görünsün</div></div><label class="toggle"><input type="checkbox" '+(s.eslemeSayisiGorunsun?'checked':'')+' onchange="updateSetting(\'eslemeSayisiGorunsun\',this.checked)"><span class="toggle-slider"></span></label></div>'+
-  '<div class="setting-row"><div><div class="setting-label">Kiralık Kategori Aktif</div></div><label class="toggle"><input type="checkbox" '+(s.kiralikKategoriAktif?'checked':'')+' onchange="updateSetting(\'kiralikKategoriAktif\',this.checked);applySettings()"><span class="toggle-slider"></span></label></div>'+
-  '<div class="setting-row"><div><div class="setting-label">Admin — Hak Satın Al Görünsün</div><div class="setting-desc">Admin hesabında bu menüyü göster</div></div><label class="toggle"><input type="checkbox" '+(s.adminPaketGorunsun?'checked':'')+' onchange="updateSetting(\'adminPaketGorunsun\',this.checked);var np=document.getElementById(\'navPaket\');if(np&&currentUser.role===\'admin\')np.style.display=this.checked?\'flex\':\'none\'"><span class="toggle-slider"></span></label></div></div>'+
+  '<div class="setting-row"><div><div class="setting-label">Kiralık Kategori Aktif</div></div><label class="toggle"><input type="checkbox" '+(s.kiralikKategoriAktif?'checked':'')+' onchange="updateSetting(\'kiralikKategoriAktif\',this.checked);applySettings()"><span class="toggle-slider"></span></label></div></div>'+
 
   '<div class="settings-card"><div class="settings-card-title">Danışman Limitleri</div>'+
   '<div class="setting-row"><div><div class="setting-label">Maks. Müşteri (0=∞)</div></div><input type="number" class="setting-input" value="'+s.maxMusteri+'" onchange="updateSetting(\'maxMusteri\',+this.value)"></div></div>'+
