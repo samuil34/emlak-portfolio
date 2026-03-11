@@ -127,7 +127,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* TABLE — desktop */
 .table-wrap{background:var(--surface);border:1px solid var(--border);overflow:auto;margin-bottom:16px;display:none;}
 @media(min-width:640px){.table-wrap{display:block;}}
-table{width:100%;border-collapse:collapse;min-width:480px;}
+table{width:100%;border-collapse:collapse;min-width:480px;}td{word-break:break-word;overflow-wrap:break-word;max-width:200px;}
 th{padding:9px 12px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);text-align:left;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;}
 td{padding:10px 12px;font-size:13px;color:var(--text);border-bottom:1px solid rgba(46,44,40,.4);}
 tr:last-child td{border-bottom:none;}
@@ -843,14 +843,14 @@ function renderMusteriler(){
     var rc=m.gorunum==='acik'&&m.durum==='beklemede'?' class="beklemede-row"':'';
     var matchCount=calcMatches(m).length;
     if(matchCount>0&&rc==='')rc=' class="match-row"';
-    return '<tr'+rc+'><td>'+m.ad+'</td><td>'+(m.tel?'<span onclick="showPhone(\''+m.ad+'\',\''+m.tel+'\')" style="color:var(--gold-dim);font-size:12px;cursor:pointer;">📞 '+m.tel+'</span>':'<span style="color:var(--text-muted);font-size:12px">—</span>')+'</td><td>'+tipBadge(m.tip)+'</td><td>₺'+formatSayi(+(m.butce||0))+'</td><td>'+(m.ilce||'—')+'</td><td style="color:var(--text-muted);font-size:12px;max-width:120px">'+(m.not||'—')+'</td><td class="vis-toggle" onclick="toggleGorunum('+m.id+')">'+gorununBadge(m.gorunum)+'</td><td>'+matchBadge(m)+'</td><td><button class="btn-sm" onclick="editMusteri('+m.id+')">Düzenle</button><button class="btn-sm danger" onclick="deleteMusteri('+m.id+')">Sil</button></td></tr>';
+    return '<tr'+rc+'><td>'+m.ad+'</td><td>'+(m.tel?'<span onclick="showPhone(\''+m.ad+'\',\''+m.tel+'\')" style="color:var(--gold-dim);font-size:12px;cursor:pointer;">📞 '+m.tel+'</span>':'<span style="color:var(--text-muted);font-size:12px">—</span>')+'</td><td>'+tipBadge(m.tip)+'</td><td>₺'+formatSayi(+(m.butce||0))+'</td><td>'+(m.ilce||'—')+'</td><td style="color:var(--text-muted);font-size:12px;max-width:150px;word-break:break-word;white-space:normal">'+(m.not||'—')+'</td><td class="vis-toggle" onclick="toggleGorunum('+m.id+')">'+gorununBadge(m.gorunum)+'</td><td>'+matchBadge(m)+'</td><td><button class="btn-sm" onclick="editMusteri('+m.id+')">Düzenle</button><button class="btn-sm danger" onclick="deleteMusteri('+m.id+')">Sil</button></td></tr>';
   }).join(''):'<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px">Müşteri bulunamadı</td></tr>';
   // mobile
   document.getElementById('musteriCards').innerHTML=list.length?list.map(function(m){
     var mHasMatch=calcMatches(m).length>0;
     return '<div class="m-card'+(m.gorunum==='acik'&&m.durum==='beklemede'?' beklemede':'')+(mHasMatch?' has-match':'')+'">'+
     '<div class="m-card-header"><span class="m-card-name">'+m.ad+'</span>'+tipBadge(m.tip)+'</div>'+
-    '<div class="m-card-meta">'+(m.tel?'<span onclick="showPhone(\''+m.ad+'\',\''+m.tel+'\')" style="color:var(--gold-dim);cursor:pointer;">📞 '+m.tel+'</span>':'')+' · ₺'+formatSayi(+(m.butce||0))+' · '+(m.ilce||'—')+(m.not?' · '+m.not:'')+'</div>'+
+    '<div class="m-card-meta">'+(m.tel?'<span onclick="showPhone(\''+m.ad+'\',\''+m.tel+'\')" style="color:var(--gold-dim);cursor:pointer;">📞 '+m.tel+'</span>':'')+' · ₺'+formatSayi(+(m.butce||0))+' · '+(m.ilce||'—')+(m.not?'<div style="font-size:11px;color:var(--text-muted);margin-top:3px;word-break:break-word;white-space:normal">'+m.not+'</div>':'')+'</div>'+
     '<div class="m-card-footer">'+
     '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">'+
     '<span class="vis-toggle" onclick="toggleGorunum('+m.id+')">'+gorununBadge(m.gorunum)+'</span>'+
