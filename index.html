@@ -612,12 +612,12 @@ function calcMatches(m){
   var hedef=karsıTip[m.tip];
   if(!hedef)return [];
   return db.musteriler.filter(function(x){
-    if(x.id===m.id)return false;
+    if(+x.id===+m.id)return false;
     if(x.tip!==hedef)return false;
     if(x.gorunum==='gizli')return false;
     if(x.durum!=='onaylandi')return false;
     // Aynı danışman kontrolü (varsayılan: farklı danışman şartı VAR)
-    if(!s.ayniDanismanEslesmeSin && x.agentId===m.agentId)return false;
+    if(!s.ayniDanismanEslesmeSin && +x.agentId===+m.agentId)return false;
     // İl uyumu (sadece zorunluysa kontrol et)
     if(s.ilUyumuZorunlu && m.il && x.il && m.il!==x.il)return false;
     // İlçe uyumu (sadece zorunluysa kontrol et)
@@ -635,15 +635,15 @@ function calcMatches(m){
   });
 }
 
-function isRevealed(id){return db.revealed.some(function(r){return r.viewerId===currentUser.id&&r.targetId===id;});}
+function isRevealed(id){return db.revealed.some(function(r){return +r.viewerId===+currentUser.id&&+r.targetId===+id;});}
 
 function matchBadge(m){
   if(!db.settings.eslemeSayisiGorunsun)return '—';
   var matches=calcMatches(m);
   if(matches.length===0)return '<span class="match-badge no-match">0 eşleşme</span>';
   var rev=isRevealed(m.id);
-  if(rev)return '<span class="match-badge revealed" onclick="showMatches('+m.id+')">✓ '+matches.length+' eşleşme</span>';
-  return '<span class="match-badge" onclick="revealMatches('+m.id+')">🔍 '+matches.length+' eşleşme</span>';
+  if(rev)return '<span class="match-badge revealed" onclick="showMatchDetail('+m.id+')">✓ '+matches.length+' eşleşme</span>';
+  return '<span class="match-badge" onclick="showMatchDetail('+m.id+')">🔍 '+matches.length+' eşleşme</span>';
 }
 
 function revealMatches(mId){
@@ -1507,7 +1507,8 @@ function showChangePassword(){
 }
 
 function showMatchDetail(id){
-  var m=db.musteriler.find(function(x){return x.id===id;});
+  id=+id;
+  var m=db.musteriler.find(function(x){return +x.id===id;});
   if(!m)return;
   var matches=calcMatches(m);
   document.getElementById('matchDetailTitle').innerHTML=
@@ -1544,11 +1545,21 @@ function showMatchDetail(id){
 }
 
 function revealMatch(myId,targetId){
-  if(currentUser.credits<db.settings.eslesmeMaliyeti){showToast('Yeterli hak yok!');return;}
-  currentUser.credits-=db.settings.eslesmeMaliyeti;
-  db.revealed.push({viewerId:currentUser.id,targetId:targetId});
-  updateCreditsDisplay();
-  showMatchDetail(myId);
+  var cost=db.settings.eslesmeHakMaliyeti||1;
+  if(currentUser.credits<cost){showToast('Yeterli hak yok!');return;}
+  var newC=currentUser.credits-cost;
+  supa.from('revealed').insert({viewer_id:currentUser.id,target_id:targetId}).then(function(res){
+    if(res.error&&res.error.code!=='23505'){showToast('Hata!');return;}
+    supa.from('users').update({credits:newC}).eq('id',currentUser.id).then(function(){
+      currentUser.credits=newC;
+      var u=db.users.find(function(x){return x.id===currentUser.id;});
+      if(u)u.credits=newC;
+      db.revealed.push({viewerId:currentUser.id,targetId:targetId});
+      updateCreditsBar();
+      showMatchDetail(myId);
+      showToast(cost+' hak kullanıldı.');
+    });
+  });
 }
 
 function showPhone(name, tel){
@@ -1581,51 +1592,6 @@ function showChangePassword(){
     if(u)u.password=yeni;
     showToast('Şifre güncellendi!');
   });
-}
-
-function showMatchDetail(id){
-  var m=db.musteriler.find(function(x){return x.id===id;});
-  if(!m)return;
-  var matches=calcMatches(m);
-  document.getElementById('matchDetailTitle').innerHTML=
-    '<span style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:2px">'+m.ad+'</span>'+
-    matches.length+' Eşleşme Bulundu';
-  if(matches.length===0){
-    document.getElementById('matchDetailContent').innerHTML=
-      '<div style="text-align:center;padding:30px;color:var(--text-muted)">Henüz eşleşme yok</div>';
-  } else {
-    var html='';
-    matches.forEach(function(x,i){
-      var revealed=isRevealed(x.id);
-      html+='<div style="background:var(--surface2);border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;">';
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
-      html+=tipBadge(x.tip);
-      html+='<span style="font-size:11px;color:var(--text-muted)">Danışman: gizli</span>';
-      html+='</div>';
-      html+='<div style="font-size:12px;color:var(--text-dim);line-height:1.8">';
-      html+='📍 '+(x.ilce||'Herhangi')+'<br>';
-      html+='💰 ₺'+formatSayi(+(x.butce||0))+'<br>';
-      if(x.not)html+='📝 '+x.not+'<br>';
-      html+='</div>';
-      if(!revealed){
-        html+='<button onclick="revealMatch('+m.id+','+x.id+')" class="btn-sm" style="margin-top:8px;width:100%;text-align:center;">🔓 Detayı Gör (1 Hak)</button>';
-      } else {
-        html+='<div style="margin-top:8px;padding:8px;background:var(--bg);border:1px solid var(--gold-dim);font-size:12px;color:var(--gold);">'+
-          '👤 '+agentName(x.agentId)+'</div>';
-      }
-      html+='</div>';
-    });
-    document.getElementById('matchDetailContent').innerHTML=html;
-  }
-  document.getElementById('matchDetailModal').classList.add('open');
-}
-
-function revealMatch(myId,targetId){
-  if(currentUser.credits<db.settings.eslesmeMaliyeti){showToast('Yeterli hak yok!');return;}
-  currentUser.credits-=db.settings.eslesmeMaliyeti;
-  db.revealed.push({viewerId:currentUser.id,targetId:targetId});
-  updateCreditsDisplay();
-  showMatchDetail(myId);
 }
 
 function showPhone(name, tel){
