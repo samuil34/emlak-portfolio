@@ -702,8 +702,6 @@ function planGorusmeSorusu(musteriId, eslesmeid){
   var handler=function(){
     if(document.visibilityState!=='visible')return;
     document.removeEventListener('visibilitychange', handler);
-    var mevcut=getDurum(musteriId,eslesmeid);
-    if(mevcut&&mevcut!=='beklemede')return;
     showGorusmeSorusu(musteriId, eslesmeid);
   };
   document.addEventListener('visibilitychange', handler);
@@ -721,23 +719,30 @@ function showGorusmeSorusu(musteriId, eslesmeid){
 
 function secGorusmeDurum(durum){
   if(!currentGorusme)return;
-  setDurum(currentGorusme.musteriId, currentGorusme.eslesmeid, durum);
+  var mid=currentGorusme.musteriId, eid=currentGorusme.eslesmeid;
+  setDurum(mid, eid, durum);
   closeModal('gorusmeModal');
   currentGorusme=null;
+  // Eşleşme detayını anında güncelle
+  setTimeout(function(){ showMatchDetail(mid); }, 100);
 }
 var currentGorusme=null;
 
 function setDurum(musteriId, eslesmeid, durum){
   var existing=db.eslesmeDurum.find(function(x){return +x.viewerId===+currentUser.id&&+x.musteriId===+musteriId&&+x.eslesmeid===+eslesmeid;});
   if(existing){
-    existing.durum=durum;
+    existing.durum=durum; // anında güncelle
     supa.from('eslesme_durum').update({durum:durum,updated_at:new Date().toISOString()}).eq('id',existing.id).then(function(){});
   } else {
+    db.eslesmeDurum.push({id:null,viewerId:+currentUser.id,musteriId:+musteriId,eslesmeid:+eslesmeid,durum:durum}); // anında ekle
     supa.from('eslesme_durum').insert({viewer_id:currentUser.id,musteri_id:musteriId,eslesme_id:eslesmeid,durum:durum}).select().single().then(function(res){
-      if(res.data)db.eslesmeDurum.push({id:res.data.id,viewerId:+currentUser.id,musteriId:+musteriId,eslesmeid:+eslesmeid,durum:durum});
+      if(res.data){
+        var d=db.eslesmeDurum.find(function(x){return +x.viewerId===+currentUser.id&&+x.musteriId===+musteriId&&+x.eslesmeid===+eslesmeid;});
+        if(d)d.id=res.data.id;
+      }
     });
   }
-  showMatchDetail(musteriId);
+  showMatchDetail(musteriId); // anında yenile
 }
 
 function matchBadge(m){
