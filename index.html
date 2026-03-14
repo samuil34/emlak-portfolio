@@ -2078,7 +2078,6 @@ document.addEventListener('DOMContentLoaded', function(){
         supa.from('musteriler').select('*'),
         supa.from('revealed').select('*').eq('viewer_id',user.id),
         supa.from('eslesme_durum').select('*').eq('viewer_id',user.id),
-        supa.from('eslesme_durum').select('*').eq('viewer_id',user.id),
         supa.from('users').select('*')
       ]).then(function(r){
         if(r[0].data){
