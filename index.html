@@ -1020,7 +1020,7 @@ function openMusteriModal(editId){
     var yazi=document.getElementById('mButceYazi');if(yazi&&rawB)yazi.textContent=sayiyiYaziyaCevir(parseInt(rawB,10))+' Türk Lirası';
     document.getElementById('mIl').value=m.il||'';populateIlceFromIl();setTimeout(function(){document.getElementById('mIlce').value=m.ilce||'';},0);
     document.getElementById('mIlce').value=m.ilce;document.getElementById('mNot').value=m.not;document.getElementById('mGorunum').value=m.gorunum;}
-  else{['mAd','mTel','mButce','mNot'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('mButceYazi').textContent='';document.getElementById('mTip').value='alici';document.getElementById('mGorunum').value='gizli';}
+  else{['mAd','mTel','mButce','mNot'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('mButceYazi').textContent='';document.getElementById('mTip').value='alici';document.getElementById('mGorunum').value='gizli';var haSel=document.getElementById('mHedefAgent');if(haSel)haSel.value='';}
   var tipSel=document.getElementById('mTip');
   Array.from(tipSel.options).forEach(function(o){if((o.value==='kiralik'||o.value==='kiraci')&&!db.settings.kiralikKategoriAktif)o.style.display='none';else o.style.display='';});
   // Admin ise danışman seçimi göster
