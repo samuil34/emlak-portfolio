@@ -164,7 +164,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:flex-end;justify-content:center;padding:0;}
-.modal-overlay.open{display:flex;}#notModal.open{align-items:center!important;padding:20px;}
+.modal-overlay.open{display:flex;}#notModal.open{align-items:center!important;padding:20px;}#gorusmeModal{z-index:500;}#gorusmeModal.open{align-items:center!important;}
 @media(min-width:600px){.modal-overlay{align-items:center;padding:20px;}}
 .modal{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--gold-dim);width:100%;max-width:500px;max-height:92vh;overflow-y:auto;padding:24px 20px;border-radius:0;}
 @media(min-width:600px){.modal{padding:28px 28px;}}
@@ -460,19 +460,19 @@ tr:hover td{background:rgba(255,255,255,.015);}
 </div>
 
 <!-- MODAL: GÖRÜŞME SORUSU -->
-<div class="modal-overlay" id="gorüşmeModal" style="align-items:center!important;padding:20px">
+<div class="modal-overlay" id="gorusmeModal" style="align-items:center!important;padding:20px;z-index:500">
   <div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--gold-dim);width:100%;max-width:380px;margin:auto">
     <div style="padding:18px 18px 12px;border-bottom:1px solid var(--border)">
       <div style="font-size:10px;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Görüşme Nasıl Geçti?</div>
-      <div id="gorüşmeMusteri" style="font-size:13px;color:var(--text);margin-bottom:2px"></div>
-      <div style="font-size:11px;color:var(--text-muted)">Danışman: <span id="gorüşmeModalAd" style="color:var(--gold)"></span></div>
+      <div id="gorusmeMusteri" style="font-size:13px;color:var(--text);margin-bottom:2px"></div>
+      <div style="font-size:11px;color:var(--text-muted)">Danışman: <span id="gorusmeModalAd" style="color:var(--gold)"></span></div>
     </div>
     <div style="padding:14px;display:flex;flex-direction:column;gap:8px">
-      <button onclick="seçGorüşmeDurum('ulasilamadi')" style="padding:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;cursor:pointer;text-align:left">📞 Ulaşamadım / Cevap yok</button>
-      <button onclick="seçGorüşmeDurum('gorusuldu')" style="padding:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;cursor:pointer;text-align:left">⏳ Görüştük, hâlâ düşünüyor</button>
-      <button onclick="seçGorüşmeDurum('anlasaldi')" style="padding:12px;border:1px solid rgba(76,175,125,0.4);background:rgba(76,175,125,0.06);color:var(--green);font-size:13px;cursor:pointer;text-align:left">🟢 Anlaştık!</button>
-      <button onclick="seçGorüşmeDurum('olmadi')" style="padding:12px;border:1px solid rgba(255,100,100,0.3);background:rgba(255,100,100,0.04);color:#ff6b6b;font-size:13px;cursor:pointer;text-align:left">🔴 Olmadı</button>
-      <button onclick="closeModal('gorüşmeModal')" style="padding:10px;border:none;background:none;color:var(--text-muted);font-size:12px;cursor:pointer">Şimdi Değil</button>
+      <button onclick="secGorusmeDurum('ulasilamadi')" style="padding:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;cursor:pointer;text-align:left">📞 Ulaşamadım / Cevap yok</button>
+      <button onclick="secGorusmeDurum('gorusuldu')" style="padding:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;cursor:pointer;text-align:left">⏳ Görüştük, hâlâ düşünüyor</button>
+      <button onclick="secGorusmeDurum('anlasaldi')" style="padding:12px;border:1px solid rgba(76,175,125,0.4);background:rgba(76,175,125,0.06);color:var(--green);font-size:13px;cursor:pointer;text-align:left">🟢 Anlaştık!</button>
+      <button onclick="secGorusmeDurum('olmadi')" style="padding:12px;border:1px solid rgba(255,100,100,0.3);background:rgba(255,100,100,0.04);color:#ff6b6b;font-size:13px;cursor:pointer;text-align:left">🔴 Olmadı</button>
+      <button onclick="closeModal('gorusmeModal')" style="padding:10px;border:none;background:none;color:var(--text-muted);font-size:12px;cursor:pointer">Şimdi Değil</button>
     </div>
   </div>
 </div>
@@ -698,31 +698,31 @@ function getDurum(musteriId, eslesmeid){
   return d?d.durum:null;
 }
 
-function planGorüşmeSorusu(musteriId, eslesmeid){
+function planGorusmeSorusu(musteriId, eslesmeid){
   setTimeout(function(){
     var mevcut=getDurum(musteriId,eslesmeid);
     if(mevcut&&mevcut!=='beklemede')return;
-    showGorüşmeSorusu(musteriId, eslesmeid);
+    showGorusmeSorusu(musteriId, eslesmeid);
   }, 4000);
 }
 
-function showGorüşmeSorusu(musteriId, eslesmeid){
+function showGorusmeSorusu(musteriId, eslesmeid){
   var m=db.musteriler.find(function(x){return +x.id===+musteriId;});
   var x=db.musteriler.find(function(x){return +x.id===+eslesmeid;});
   if(!m||!x)return;
-  document.getElementById('gorüşmeModalAd').textContent=agentName(x.agentId);
-  document.getElementById('gorüşmeMusteri').textContent=m.ad+' ↔ '+x.ad;
-  currentGorüşme={musteriId:musteriId,eslesmeid:eslesmeid};
-  document.getElementById('gorüşmeModal').classList.add('open');
+  document.getElementById('gorusmeModalAd').textContent=agentName(x.agentId);
+  document.getElementById('gorusmeMusteri').textContent=m.ad+' ↔ '+x.ad;
+  currentGorusme={musteriId:musteriId,eslesmeid:eslesmeid};
+  document.getElementById('gorusmeModal').classList.add('open');
 }
 
-function seçGorüşmeDurum(durum){
-  if(!currentGorüşme)return;
-  setDurum(currentGorüşme.musteriId, currentGorüşme.eslesmeid, durum);
-  closeModal('gorüşmeModal');
-  currentGorüşme=null;
+function secGorusmeDurum(durum){
+  if(!currentGorusme)return;
+  setDurum(currentGorusme.musteriId, currentGorusme.eslesmeid, durum);
+  closeModal('gorusmeModal');
+  currentGorusme=null;
 }
-var currentGorüşme=null;
+var currentGorusme=null;
 
 function setDurum(musteriId, eslesmeid, durum){
   var existing=db.eslesmeDurum.find(function(x){return +x.viewerId===+currentUser.id&&+x.musteriId===+musteriId&&+x.eslesmeid===+eslesmeid;});
@@ -1906,8 +1906,9 @@ function showMatchDetail(id){
         html+='<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gold)">✓ &nbsp;<strong>'+agentName(x.agentId)+'</strong></div>';
         if(agTel){
           html+='<div style="display:flex;gap:6px">';
-          html+='<a href="tel:'+agTel+'" onclick="planGorüşmeSorusu('+m.id+','+x.id+')" style="padding:6px 12px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:11px;text-decoration:none;cursor:pointer">📞 Ara</a>';
-          html+='<a href="https://wa.me/90'+agTel.replace(/[^0-9]/g,'').replace(/^0/,'')+'" target="_blank" onclick="planGorüşmeSorusu('+m.id+','+x.id+')" style="padding:6px 12px;background:#25d366;border:1px solid #25d366;color:#fff;font-size:11px;text-decoration:none;cursor:pointer">WhatsApp</a>';
+          html+='<button onclick="window.location=\'tel:'+agTel+'\';planGorusmeSorusu('+m.id+','+x.id+')" style="padding:6px 12px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:11px;cursor:pointer">📞 Ara</button>';
+          var waNum='90'+agTel.replace(/[^0-9]/g,'').replace(/^0/,'');
+          html+='<button onclick="window.open(\'https://wa.me/'+waNum+'\');planGorusmeSorusu('+m.id+','+x.id+')" style="padding:6px 12px;background:#25d366;border:1px solid #25d366;color:#fff;font-size:11px;cursor:pointer">WhatsApp</button>';
           html+='</div>';
         } else {
           html+='<span style="font-size:11px;color:var(--text-muted)">Telefon eklenmemiş</span>';
