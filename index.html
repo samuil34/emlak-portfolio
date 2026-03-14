@@ -1260,9 +1260,74 @@ function renderRapor(){
   }
   eslesmeyenHTML+='</div>';
 
+  // Tutarsızlık kontrolü - olması gereken vs olan
+  var tutarsizHTML='<div style="background:var(--surface);border:1px solid var(--border);padding:16px;margin-top:10px">';
+  tutarsizHTML+='<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:12px">Tutarsızlık Kontrolü</div>';
+  var hatalar=[];
+  var ciftTipler=[['alici','satici'],['satici','alici'],['kiralik','kiraci'],['kiraci','kiralik']];
+  var kontrol_edildi={};
+
+  acikOnay.forEach(function(m){
+    acikOnay.forEach(function(x){
+      if(+m.id>=+x.id)return;
+      var key=Math.min(+m.id,+x.id)+'-'+Math.max(+m.id,+x.id);
+      if(kontrol_edildi[key])return;
+      kontrol_edildi[key]=true;
+
+      var karsıTip={alici:'satici',satici:'alici',kiralik:'kiraci',kiraci:'kiralik'};
+      if(karsıTip[m.tip]!==x.tip)return; // tip uyumsuz zaten
+
+      // Olması gereken: tüm kuralları elle kontrol et
+      var s=db.settings;
+      var gerekmeli=true;
+      if(!s.ayniDanismanEslesin && +m.agentId===+x.agentId) gerekmeli=false;
+      if(m.hedefAgentId && +m.hedefAgentId!==+x.agentId) gerekmeli=false;
+      if(x.hedefAgentId && +x.hedefAgentId!==+m.agentId) gerekmeli=false;
+      if(s.ilUyumuZorunlu && m.il && x.il && m.il!==x.il) gerekmeli=false;
+      if(s.ilceUyumuZorunlu && m.ilce && x.ilce && m.ilce!==x.ilce) gerekmeli=false;
+      if(s.butceUyumuAktif){
+        var mb=+(m.butce||0),xb=+(x.butce||0);
+        if(mb>0&&xb>0){var mn=Math.min(mb,xb),mx=Math.max(mb,xb);if(mx/mn-1>s.butceTolerans/100)gerekmeli=false;}
+      }
+
+      // Olan: calcMatches sonucu
+      var mEslesmeleri=calcMatches(m).map(function(e){return +e.id;});
+      var olan=mEslesmeleri.indexOf(+x.id)>=0;
+
+      if(gerekmeli!==olan){
+        hatalar.push({
+          m:m.ad+'('+m.tip+')',
+          x:x.ad+'('+x.tip+')',
+          gerekmeli:gerekmeli?'✓ Eşleşmeli':'✗ Eşleşmemeli',
+          olan:olan?'✓ Eşleşiyor':'✗ Eşleşmiyor',
+          sorun:gerekmeli?'Eşleşmesi lazım ama eşleşmiyor':'Eşleşmemesi lazım ama eşleşiyor'
+        });
+      }
+    });
+  });
+
+  if(hatalar.length===0){
+    tutarsizHTML+='<div style="color:var(--green);font-size:13px;padding:8px 0">✅ Tüm eşleşmeler kurallara uygun — tutarsızlık yok.</div>';
+  } else {
+    tutarsizHTML+='<div style="color:#ff6b6b;font-size:12px;margin-bottom:10px">⚠ '+hatalar.length+' tutarsızlık bulundu:</div>';
+    tutarsizHTML+='<div style="display:flex;flex-direction:column;gap:6px">';
+    hatalar.forEach(function(h){
+      tutarsizHTML+='<div style="background:rgba(255,100,100,0.06);border:1px solid rgba(255,100,100,0.3);padding:10px 12px;font-size:11px">'+
+        '<div style="color:var(--text);margin-bottom:4px"><strong>'+h.m+'</strong> ↔ <strong>'+h.x+'</strong></div>'+
+        '<div style="display:flex;gap:12px;color:var(--text-muted)">'+
+        '<span>Olması gereken: <strong style="color:'+(h.gerekmeli.includes('✓')?'var(--green)':'#ff6b6b')+'">'+h.gerekmeli+'</strong></span>'+
+        '<span>Olan: <strong style="color:'+(h.olan.includes('✓')?'var(--green)':'#ff6b6b')+'">'+h.olan+'</strong></span>'+
+        '</div>'+
+        '<div style="color:#ff6b6b;margin-top:3px">→ '+h.sorun+'</div>'+
+        '</div>';
+    });
+    tutarsizHTML+='</div>';
+  }
+  tutarsizHTML+='</div>';
+
   document.getElementById('admin-rapor').innerHTML=
     '<div style="padding:4px 0 16px"><div style="font-size:11px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:16px">Eşleşme Denetim Raporu</div>'+
-    havuzHTML+matrisHTML+eslesmeyenHTML+'</div>';
+    havuzHTML+matrisHTML+eslesmeyenHTML+tutarsizHTML+'</div>';
 }
 
 function onayVer(id){
