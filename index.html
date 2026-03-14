@@ -1568,41 +1568,60 @@ function showMatchDetail(id){
   var m=db.musteriler.find(function(x){return +x.id===id;});
   if(!m)return;
   var matches=calcMatches(m);
-  // Başlıkta kendi müşterisinin özeti
+  var cost=db.settings.eslesmeHakMaliyeti||1;
+
+  // ── Üst kısım: kendi müşterisi ──────────────────────────────
   document.getElementById('matchDetailTitle').innerHTML=
-    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
-    '<span style="font-size:15px;font-weight:600">'+m.ad+'</span>'+tipBadge(m.tip)+
+    '<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--gold);padding:14px 16px;margin-bottom:4px">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
+    '<span style="font-size:16px;font-weight:600;color:var(--text)">'+m.ad+'</span>'+tipBadge(m.tip)+
     '</div>'+
-    '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap">'+
-    (m.il?'<span>📍 '+m.il+(m.ilce?' / '+m.ilce:'')+'</span>':'')+
-    '<span>💰 ₺'+formatSayi(+(m.butce||0))+'</span>'+
-    (m.not?'<span>📝 '+m.not+'</span>':'')+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px">'+
+    (m.il?'<div style="font-size:11px;background:var(--bg);padding:5px 8px;color:var(--text-muted)">📍 '+(m.il||'')+(m.ilce?' / '+m.ilce:'')+'</div>':'')+
+    '<div style="font-size:11px;background:var(--bg);padding:5px 8px;color:var(--text-muted)">💰 ₺'+formatSayi(+(m.butce||0))+'</div>'+
+    (m.not?'<div style="font-size:11px;background:var(--bg);padding:5px 8px;color:var(--text-muted);grid-column:1/-1">📝 '+m.not+'</div>':'')+
     '</div>'+
-    '<div style="margin-top:8px;font-size:12px;color:var(--text-dim)">'+matches.length+' eşleşme bulundu</div>';
+    '</div>'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px 4px">'+
+    '<span style="font-size:12px;color:var(--text-muted)">Eşleşen Kayıtlar</span>'+
+    '<span style="font-size:13px;font-weight:600;color:var(--green)">'+matches.length+' Eşleşme</span>'+
+    '</div>';
+
+  // ── Alt kısım: eşleşen kayıtlar ─────────────────────────────
   if(matches.length===0){
     document.getElementById('matchDetailContent').innerHTML=
-      '<div style="text-align:center;padding:30px;color:var(--text-muted)">Henüz eşleşme yok</div>';
+      '<div style="text-align:center;padding:40px 20px;color:var(--text-muted)">'+
+      '<div style="font-size:32px;margin-bottom:8px">🔍</div>'+
+      'Henüz eşleşme yok.<br><span style="font-size:11px">Müşteri ağa açılınca eşleşmeler burada görünür.</span></div>';
   } else {
     var html='';
-    matches.forEach(function(x){
+    matches.forEach(function(x,i){
       var revealed=isRevealed(x.id);
-      html+='<div style="background:var(--surface2);border:1px solid rgba(201,168,76,0.2);padding:14px;margin-bottom:10px;border-radius:2px">';
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
-      html+=tipBadge(x.tip);
-      html+='<span style="font-size:10px;color:var(--gold-dim);letter-spacing:1px">EŞLEŞEN KAYIT</span>';
+      var butceFark=m.butce&&x.butce?Math.round(Math.abs(+(m.butce)-+(x.butce))/+(m.butce)*100):null;
+      html+='<div style="border:1px solid var(--border);margin-bottom:8px;overflow:hidden">';
+      // Kart başlığı
+      html+='<div style="background:var(--surface2);padding:10px 14px;display:flex;align-items:center;justify-content:space-between">>';
+      html+='<div style="display:flex;align-items:center;gap:8px">'+
+        '<span style="font-size:12px;color:var(--text-muted);font-weight:600">#'+(i+1)+'</span>'+
+        tipBadge(x.tip)+
+        (butceFark!==null?'<span style="font-size:10px;color:'+(butceFark<=10?'var(--green)':butceFark<=30?'var(--gold)':'var(--text-muted)')+';background:var(--bg);padding:2px 6px">%'+butceFark+' fark</span>':'')+
+        '</div>';
       html+='</div>';
-      html+='<div style="font-size:13px;color:var(--text);line-height:2;display:grid;grid-template-columns:auto 1fr;gap:0 8px">';
-      if(x.il||x.ilce)html+='<span style="color:var(--text-muted)">📍</span><span>'+(x.il||'')+(x.ilce?' / '+x.ilce:'')+'</span>';
-      html+='<span style="color:var(--text-muted)">💰</span><span>₺'+formatSayi(+(x.butce||0))+'</span>';
-      if(x.not)html+='<span style="color:var(--text-muted)">📝</span><span>'+x.not+'</span>';
+      // Kart detay
+      html+='<div style="padding:12px 14px">';
+      html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:10px">';
+      if(x.il||x.ilce)html+='<div style="font-size:12px;padding:6px 8px;background:var(--bg);color:var(--text-dim)">📍 '+(x.il||'')+(x.ilce?' / '+x.ilce:'')+'</div>';
+      html+='<div style="font-size:12px;padding:6px 8px;background:var(--bg);color:var(--text-dim)">💰 ₺'+formatSayi(+(x.butce||0))+'</div>';
+      if(x.not)html+='<div style="font-size:12px;padding:6px 8px;background:var(--bg);color:var(--text-dim);grid-column:1/-1">📝 '+x.not+'</div>';
       html+='</div>';
       if(!revealed){
-        html+='<button onclick="revealMatch('+m.id+','+x.id+')" class="btn-sm" style="margin-top:10px;width:100%;text-align:center;padding:8px">🔓 Danışmanı Gör ('+( db.settings.eslesmeHakMaliyeti||1)+' Hak)</button>';
+        html+='<button onclick="revealMatch('+m.id+','+x.id+')" style="width:100%;padding:10px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold);font-size:12px;cursor:pointer;letter-spacing:0.5px">'+
+          '🔓 Danışmanı Gör &nbsp;·&nbsp; '+cost+' Hak</button>';
       } else {
-        html+='<div style="margin-top:10px;padding:8px 10px;background:var(--bg);border:1px solid var(--gold-dim);font-size:12px;color:var(--gold);display:flex;align-items:center;gap:6px">'+
-          '👤 <strong>'+agentName(x.agentId)+'</strong></div>';
+        html+='<div style="padding:10px 12px;background:rgba(201,168,76,0.06);border:1px solid var(--gold-dim);font-size:13px;color:var(--gold);display:flex;align-items:center;gap:8px">'+
+          '✓ &nbsp;<strong>'+agentName(x.agentId)+'</strong><span style="font-size:11px;color:var(--text-muted);margin-left:auto">Danışman görüldü</span></div>';
       }
-      html+='</div>';
+      html+='</div></div>';
     });
     document.getElementById('matchDetailContent').innerHTML=html;
   }
