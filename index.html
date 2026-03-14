@@ -699,17 +699,22 @@ function getDurum(musteriId, eslesmeid){
 }
 
 function planGorüşmeSorusu(musteriId, eslesmeid){
-  // Sayfa tekrar focus alınca soru sor
+  // Hem focus hem visibilitychange dinle - hangisi önce gelirse
+  var fired=false;
   var handler=function(){
+    if(fired)return;
+    if(document.hidden)return; // hâlâ gizliyse bekleme
+    fired=true;
     window.removeEventListener('focus', handler);
+    document.removeEventListener('visibilitychange', handler);
     setTimeout(function(){
-      // Zaten durum seçilmişse sorma
       var mevcut=getDurum(musteriId,eslesmeid);
       if(mevcut&&mevcut!=='beklemede')return;
       showGorüşmeSorusu(musteriId, eslesmeid);
-    }, 800);
+    }, 1000);
   };
   window.addEventListener('focus', handler);
+  document.addEventListener('visibilitychange', handler);
 }
 
 function showGorüşmeSorusu(musteriId, eslesmeid){
