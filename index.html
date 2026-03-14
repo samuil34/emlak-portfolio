@@ -699,10 +699,14 @@ function getDurum(musteriId, eslesmeid){
 }
 
 function planGorusmeSorusu(musteriId, eslesmeid){
+  var gizlendi=false;
   var handler=function(){
-    if(document.visibilityState!=='visible')return;
-    document.removeEventListener('visibilitychange', handler);
-    showGorusmeSorusu(musteriId, eslesmeid);
+    if(document.visibilityState==='hidden'){
+      gizlendi=true; // telefon/whatsapp açıldı
+    } else if(document.visibilityState==='visible' && gizlendi){
+      document.removeEventListener('visibilitychange', handler);
+      showGorusmeSorusu(musteriId, eslesmeid);
+    }
   };
   document.addEventListener('visibilitychange', handler);
 }
