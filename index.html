@@ -849,7 +849,8 @@ function doLogin(){
         if(r[2].data){
           db.revealed=r[2].data.map(function(x){return {viewerId:x.viewer_id,targetId:x.target_id};});
         }
-        if(r[3].data){db.users=r[3].data;}
+        if(r[3]&&r[3].data){db.eslesmeDurum=r[3].data.map(function(x){return {id:x.id,viewerId:+x.viewer_id,musteriId:+x.musteri_id,eslesmeid:+x.eslesme_id,durum:x.durum};});}
+        if(r[4]&&r[4].data){db.users=r[4].data;}
         afterLogin(user, sessionStorage.getItem('lastPage')||'dashboard');
       });
     });
@@ -2106,8 +2107,8 @@ document.addEventListener('DOMContentLoaded', function(){
           });
         }
         if(r[2].data){db.revealed=r[2].data.map(function(x){return {viewerId:x.viewer_id,targetId:x.target_id};});}
-        if(r[4]&&r[4].data){db.eslesmeDurum=r[4].data.map(function(x){return {id:x.id,viewerId:+x.viewer_id,musteriId:+x.musteri_id,eslesmeid:+x.eslesme_id,durum:x.durum};});}
-        if(r[3].data){db.users=r[3].data;}
+        if(r[3]&&r[3].data){db.eslesmeDurum=r[3].data.map(function(x){return {id:x.id,viewerId:+x.viewer_id,musteriId:+x.musteri_id,eslesmeid:+x.eslesme_id,durum:x.durum};});}
+        if(r[4]&&r[4].data){db.users=r[4].data;}
         afterLogin(user, sessionStorage.getItem('lastPage')||'dashboard');
       });
     });
