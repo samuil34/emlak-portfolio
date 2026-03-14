@@ -1013,7 +1013,7 @@ function saveMusteri(){
     var newDurum=m.durum;
     if(gorunum==='acik'&&eskiG==='gizli')newDurum='beklemede';
     else if(gorunum==='gizli')newDurum='onaylandi';
-    var hedefId=document.getElementById('mHedefAgent').value?+document.getElementById('mHedefAgent').value:null;
+    var _hEl=document.getElementById('mHedefAgent');var hedefId=_hEl&&_hEl.value?+_hEl.value:null;
 supa.from('musteriler').update({ad:ad,tel:tel,tip:tip,butce:rawB,il:il,ilce:ilce,not_:not_,gorunum:gorunum,durum:newDurum,hedef_agent_id:hedefId}).eq('id',musteriEditId)
       .then(function(res){
         if(res.error){showToast('Hata: '+res.error.message);return;}
@@ -1022,7 +1022,7 @@ supa.from('musteriler').update({ad:ad,tel:tel,tip:tip,butce:rawB,il:il,ilce:ilce
         musteriEditId=null;showToast('Müşteri kaydedildi.');
       });
   } else {
-    var hedefId=document.getElementById('mHedefAgent').value?+document.getElementById('mHedefAgent').value:null;
+    var _hEl=document.getElementById('mHedefAgent');var hedefId=_hEl&&_hEl.value?+_hEl.value:null;
 supa.from('musteriler').insert({agent_id:currentUser.id,ad:ad,tel:tel,tip:tip,butce:rawB,il:il,ilce:ilce,not_:not_,gorunum:gorunum,durum:durum,hedef_agent_id:hedefId}).select().single()
       .then(function(res){
         if(res.error){showToast('Hata: '+res.error.message);return;}
@@ -1618,8 +1618,19 @@ function showMatchDetail(id){
         html+='<button onclick="revealMatch('+m.id+','+x.id+')" style="width:100%;padding:10px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold);font-size:12px;cursor:pointer;letter-spacing:0.5px">'+
           '🔓 Danışmanı Gör &nbsp;·&nbsp; '+cost+' Hak</button>';
       } else {
-        html+='<div style="padding:10px 12px;background:rgba(201,168,76,0.06);border:1px solid var(--gold-dim);font-size:13px;color:var(--gold);display:flex;align-items:center;gap:8px">'+
-          '✓ &nbsp;<strong>'+agentName(x.agentId)+'</strong><span style="font-size:11px;color:var(--text-muted);margin-left:auto">Danışman görüldü</span></div>';
+        var ag=db.users.find(function(u){return +u.id===+x.agentId;});
+        var agTel=ag&&ag.tel?ag.tel:'';
+        html+='<div style="padding:10px 12px;background:rgba(201,168,76,0.06);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">';
+        html+='<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gold)">✓ &nbsp;<strong>'+agentName(x.agentId)+'</strong></div>';
+        if(agTel){
+          html+='<div style="display:flex;gap:6px">';
+          html+='<a href="tel:'+agTel+'" style="padding:6px 12px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:11px;text-decoration:none;cursor:pointer">📞 Ara</a>';
+          html+='<a href="https://wa.me/90'+agTel.replace(/[^0-9]/g,'').replace(/^0/,'')+'" target="_blank" style="padding:6px 12px;background:#25d366;border:1px solid #25d366;color:#fff;font-size:11px;text-decoration:none;cursor:pointer">WhatsApp</a>';
+          html+='</div>';
+        } else {
+          html+='<span style="font-size:11px;color:var(--text-muted)">Telefon eklenmemiş</span>';
+        }
+        html+='</div>';
       }
       html+='</div></div>';
     });
