@@ -705,7 +705,7 @@ function planGorusmeSorusu(musteriId, eslesmeid){
       gizlendi=true; // telefon/whatsapp açıldı
     } else if(document.visibilityState==='visible' && gizlendi){
       document.removeEventListener('visibilitychange', handler);
-      showGorusmeSorusu(musteriId, eslesmeid);
+      setTimeout(function(){ showGorusmeSorusu(musteriId, eslesmeid); }, 2000);
     }
   };
   document.addEventListener('visibilitychange', handler);
