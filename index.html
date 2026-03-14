@@ -459,6 +459,24 @@ tr:hover td{background:rgba(255,255,255,.015);}
   </div>
 </div>
 
+<!-- MODAL: GÖRÜŞME SORUSU -->
+<div class="modal-overlay" id="gorüşmeModal" style="align-items:center!important;padding:20px">
+  <div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--gold-dim);width:100%;max-width:380px;margin:auto">
+    <div style="padding:18px 18px 12px;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Görüşme Nasıl Geçti?</div>
+      <div id="gorüşmeMusteri" style="font-size:13px;color:var(--text);margin-bottom:2px"></div>
+      <div style="font-size:11px;color:var(--text-muted)">Danışman: <span id="gorüşmeModalAd" style="color:var(--gold)"></span></div>
+    </div>
+    <div style="padding:14px;display:flex;flex-direction:column;gap:8px">
+      <button onclick="seçGorüşmeDurum('ulasilamadi')" style="padding:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;cursor:pointer;text-align:left">📞 Ulaşamadım / Cevap yok</button>
+      <button onclick="seçGorüşmeDurum('gorusuldu')" style="padding:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;cursor:pointer;text-align:left">⏳ Görüştük, hâlâ düşünüyor</button>
+      <button onclick="seçGorüşmeDurum('anlasaldi')" style="padding:12px;border:1px solid rgba(76,175,125,0.4);background:rgba(76,175,125,0.06);color:var(--green);font-size:13px;cursor:pointer;text-align:left">🟢 Anlaştık!</button>
+      <button onclick="seçGorüşmeDurum('olmadi')" style="padding:12px;border:1px solid rgba(255,100,100,0.3);background:rgba(255,100,100,0.04);color:#ff6b6b;font-size:13px;cursor:pointer;text-align:left">🔴 Olmadı</button>
+      <button onclick="closeModal('gorüşmeModal')" style="padding:10px;border:none;background:none;color:var(--text-muted);font-size:12px;cursor:pointer">Şimdi Değil</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: NOT -->
 <div class="modal-overlay" id="notModal" onclick="if(event.target===this)closeModal('notModal')" style="align-items:center!important;padding:20px">
   <div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--gold-dim);width:100%;max-width:400px;margin:auto;position:relative">
@@ -602,6 +620,7 @@ var db={
   users:[],
   musteriler:[],
   revealed:[],
+  eslesmeDurum:[],
   nextId:{user:4,musteri:7}
 };
 
@@ -673,6 +692,56 @@ function calcMatches(m){
 }
 
 function isRevealed(id){return db.revealed.some(function(r){return +r.viewerId===+currentUser.id&&+r.targetId===+id;});}
+
+function getDurum(musteriId, eslesmeid){
+  var d=db.eslesmeDurum.find(function(x){return +x.viewerId===+currentUser.id&&+x.musteriId===+musteriId&&+x.eslesmeid===+eslesmeid;});
+  return d?d.durum:null;
+}
+
+function planGorüşmeSorusu(musteriId, eslesmeid){
+  // Sayfa tekrar focus alınca soru sor
+  var handler=function(){
+    window.removeEventListener('focus', handler);
+    setTimeout(function(){
+      // Zaten durum seçilmişse sorma
+      var mevcut=getDurum(musteriId,eslesmeid);
+      if(mevcut&&mevcut!=='beklemede')return;
+      showGorüşmeSorusu(musteriId, eslesmeid);
+    }, 800);
+  };
+  window.addEventListener('focus', handler);
+}
+
+function showGorüşmeSorusu(musteriId, eslesmeid){
+  var m=db.musteriler.find(function(x){return +x.id===+musteriId;});
+  var x=db.musteriler.find(function(x){return +x.id===+eslesmeid;});
+  if(!m||!x)return;
+  document.getElementById('gorüşmeModalAd').textContent=agentName(x.agentId);
+  document.getElementById('gorüşmeMusteri').textContent=m.ad+' ↔ '+x.ad;
+  currentGorüşme={musteriId:musteriId,eslesmeid:eslesmeid};
+  document.getElementById('gorüşmeModal').classList.add('open');
+}
+
+function seçGorüşmeDurum(durum){
+  if(!currentGorüşme)return;
+  setDurum(currentGorüşme.musteriId, currentGorüşme.eslesmeid, durum);
+  closeModal('gorüşmeModal');
+  currentGorüşme=null;
+}
+var currentGorüşme=null;
+
+function setDurum(musteriId, eslesmeid, durum){
+  var existing=db.eslesmeDurum.find(function(x){return +x.viewerId===+currentUser.id&&+x.musteriId===+musteriId&&+x.eslesmeid===+eslesmeid;});
+  if(existing){
+    existing.durum=durum;
+    supa.from('eslesme_durum').update({durum:durum,updated_at:new Date().toISOString()}).eq('id',existing.id).then(function(){});
+  } else {
+    supa.from('eslesme_durum').insert({viewer_id:currentUser.id,musteri_id:musteriId,eslesme_id:eslesmeid,durum:durum}).select().single().then(function(res){
+      if(res.data)db.eslesmeDurum.push({id:res.data.id,viewerId:+currentUser.id,musteriId:+musteriId,eslesmeid:+eslesmeid,durum:durum});
+    });
+  }
+  showMatchDetail(musteriId);
+}
 
 function matchBadge(m){
   if(!db.settings.eslemeSayisiGorunsun)return '—';
@@ -751,6 +820,7 @@ function doLogin(){
         supa.from('settings').select('*').eq('id',1).single(),
         supa.from('musteriler').select('*'),
         supa.from('revealed').select('*').eq('viewer_id',user.id),
+        supa.from('eslesme_durum').select('*').eq('viewer_id',user.id),
         supa.from('users').select('*')
       ]).then(function(r){
         if(r[0].data){
@@ -1832,17 +1902,27 @@ function showMatchDetail(id){
       } else {
         var ag=db.users.find(function(u){return +u.id===+x.agentId;});
         var agTel=ag&&ag.tel?ag.tel:'';
-        html+='<div style="padding:10px 12px;background:rgba(201,168,76,0.06);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">';
+        var mevcut=getDurum(m.id,x.id);
+        var durumRenk={beklemede:'var(--text-muted)',ulasilamadi:'#ffaa44',gorusuldu:'var(--gold)',anlasaldi:'var(--green)',olmadi:'#ff6b6b'};
+        var durumEtiket={beklemede:'⚪ Henüz görüşülmedi',ulasilamadi:'📞 Ulaşılamadı',gorusuldu:'⏳ Görüşülüyor',anlasaldi:'🟢 Anlaşıldı',olmadi:'🔴 Olmadı'};
+        var d=mevcut||'beklemede';
+        html+='<div style="border:1px solid var(--gold-dim);overflow:hidden">';
+        html+='<div style="padding:10px 12px;background:rgba(201,168,76,0.06);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">';
         html+='<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gold)">✓ &nbsp;<strong>'+agentName(x.agentId)+'</strong></div>';
         if(agTel){
           html+='<div style="display:flex;gap:6px">';
-          html+='<a href="tel:'+agTel+'" style="padding:6px 12px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:11px;text-decoration:none;cursor:pointer">📞 Ara</a>';
-          html+='<a href="https://wa.me/90'+agTel.replace(/[^0-9]/g,'').replace(/^0/,'')+'" target="_blank" style="padding:6px 12px;background:#25d366;border:1px solid #25d366;color:#fff;font-size:11px;text-decoration:none;cursor:pointer">WhatsApp</a>';
+          html+='<a href="tel:'+agTel+'" onclick="planGorüşmeSorusu('+m.id+','+x.id+')" style="padding:6px 12px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:11px;text-decoration:none;cursor:pointer">📞 Ara</a>';
+          html+='<a href="https://wa.me/90'+agTel.replace(/[^0-9]/g,'').replace(/^0/,'')+'" target="_blank" onclick="planGorüşmeSorusu('+m.id+','+x.id+')" style="padding:6px 12px;background:#25d366;border:1px solid #25d366;color:#fff;font-size:11px;text-decoration:none;cursor:pointer">WhatsApp</a>';
           html+='</div>';
         } else {
           html+='<span style="font-size:11px;color:var(--text-muted)">Telefon eklenmemiş</span>';
         }
         html+='</div>';
+        html+='<div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">';
+        html+='<span style="font-size:11px;color:'+durumRenk[d]+'">'+durumEtiket[d]+'</span>';
+        html+='<div style="display:flex;gap:4px;flex-wrap:wrap">';
+        
+        html+='</div></div></div>';
       }
       html+='</div></div>';
     });
@@ -1998,6 +2078,8 @@ document.addEventListener('DOMContentLoaded', function(){
         supa.from('settings').select('*').eq('id',1).single(),
         supa.from('musteriler').select('*'),
         supa.from('revealed').select('*').eq('viewer_id',user.id),
+        supa.from('eslesme_durum').select('*').eq('viewer_id',user.id),
+        supa.from('eslesme_durum').select('*').eq('viewer_id',user.id),
         supa.from('users').select('*')
       ]).then(function(r){
         if(r[0].data){
@@ -2024,6 +2106,7 @@ document.addEventListener('DOMContentLoaded', function(){
           });
         }
         if(r[2].data){db.revealed=r[2].data.map(function(x){return {viewerId:x.viewer_id,targetId:x.target_id};});}
+        if(r[4]&&r[4].data){db.eslesmeDurum=r[4].data.map(function(x){return {id:x.id,viewerId:+x.viewer_id,musteriId:+x.musteri_id,eslesmeid:+x.eslesme_id,durum:x.durum};});}
         if(r[3].data){db.users=r[3].data;}
         afterLogin(user, sessionStorage.getItem('lastPage')||'dashboard');
       });
