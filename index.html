@@ -699,11 +699,14 @@ function getDurum(musteriId, eslesmeid){
 }
 
 function planGorusmeSorusu(musteriId, eslesmeid){
-  setTimeout(function(){
+  var handler=function(){
+    if(document.visibilityState!=='visible')return;
+    document.removeEventListener('visibilitychange', handler);
     var mevcut=getDurum(musteriId,eslesmeid);
     if(mevcut&&mevcut!=='beklemede')return;
     showGorusmeSorusu(musteriId, eslesmeid);
-  }, 4000);
+  };
+  document.addEventListener('visibilitychange', handler);
 }
 
 function showGorusmeSorusu(musteriId, eslesmeid){
