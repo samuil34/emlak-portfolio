@@ -1256,7 +1256,6 @@ function renderSettings(){
 }
 
 function updateSetting(key,val){
-  console.log('updateSetting',key,val);
   db.settings[key]=val;
   // Supabase field mapping
   var fieldMap={
