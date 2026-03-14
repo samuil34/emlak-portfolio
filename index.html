@@ -392,8 +392,11 @@ tr:hover td{background:rgba(255,255,255,.015);}
           <div class="tab active" onclick="adminTab('onay',this)">⏳ Onay <span id="onayTabCount"></span></div>
           <div class="tab" onclick="adminTab('danismanlar',this)">Danışmanlar</div>
           <div class="tab" onclick="adminTab('tumMusteriler',this)">Tüm Müşteriler</div>
+          <div class="tab" onclick="adminTab('rapor',this)">📊 Rapor</div>
           <div class="tab" onclick="adminTab('ayarlar',this)">⚙ Ayarlar</div>
         </div>
+        <div id="admin-rapor" style="display:none" id="admin-rapor"></div>
+
         <div id="admin-onay">
           <div id="onayListesi"></div>
         </div>
@@ -406,6 +409,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
           <div class="table-wrap"><table><thead><tr><th>Ad Soyad</th><th>Tip</th><th>Bütçe/Kira</th><th>İlçe</th><th>Danışman</th><th>Görünürlük</th><th>Durum</th><th>Hedef</th><th>İşlem</th></tr></thead><tbody id="adminMusteriTable"></tbody></table></div>
           <div class="card-list" id="adminMusteriCards"></div>
         </div>
+        <div id="admin-rapor" style="display:none"></div>
         <div id="admin-ayarlar" style="display:none"><div class="settings-grid" id="settingsGrid"></div></div>
       </div>
       <div class="page" id="page-ayarlar">
@@ -1089,7 +1093,7 @@ function deleteMusteri(id){showConfirm('🗑','Silinsin mi?','Bu müşteri kalı
 function satinAl(){var user=db.users.find(function(u){return u.id===currentUser.id;});user.credits+=db.settings.paketHak;currentUser.credits=user.credits;updateCreditsBar();showToast(db.settings.paketHak+' hak eklendi! Toplam: '+user.credits);}
 
 function adminTab(name,el){
-  ['onay','danismanlar','tumMusteriler','ayarlar'].forEach(function(t){document.getElementById('admin-'+t).style.display='none';});
+  ['onay','danismanlar','tumMusteriler','rapor','ayarlar'].forEach(function(t){document.getElementById('admin-'+t).style.display='none';});
   document.getElementById('admin-'+name).style.display='block';
   document.querySelectorAll('#page-admin .tab').forEach(function(t){t.classList.remove('active');});
   el.classList.add('active');currentAdminTab=name;renderAdminSection(name);
@@ -1159,6 +1163,7 @@ function renderAdminSection(name){
     }).join('');
   }
   if(name==='ayarlar')renderSettings();
+  if(name==='rapor')renderRapor();
 }
 
 function hepsiniOnayla(){
@@ -1183,6 +1188,81 @@ function setHedefAgent(musteriId, agentId){
     if(m)m.hedefAgentId=hedef;
     showToast(hedef?'Hedef danışman ayarlandı.':'Herkese görünür yapıldı.');
   });
+}
+
+function renderRapor(){
+  var tipler=['alici','satici','kiralik','kiraci'];
+  var tipLabel2={alici:'Alıcı',satici:'Satıcı',kiralik:'Kiralık Arayan',kiraci:'Kiracı Arayan'};
+  var acikOnay=db.musteriler.filter(function(m){return m.gorunum==='acik'&&m.durum==='onaylandi';});
+
+  // Havuz istatistikleri
+  var havuzHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px">';
+  tipler.forEach(function(t){
+    var list=acikOnay.filter(function(m){return m.tip===t;});
+    var renk={alici:'#7c6af7',satici:'#c9a84c',kiralik:'#9b7dce',kiraci:'#4caf7d'}[t];
+    havuzHTML+='<div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid '+renk+';padding:14px">'+
+      '<div style="font-size:10px;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px">'+tipLabel2[t].toUpperCase()+'</div>'+
+      '<div style="font-size:28px;font-weight:700;color:'+renk+'">'+list.length+'</div>'+
+      '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">ağda aktif kayıt</div>'+
+      '</div>';
+  });
+  havuzHTML+='</div>';
+
+  // Eşleşme matrisi
+  var ciftler=[['alici','satici'],['kiralik','kiraci']];
+  var matrisHTML='<div style="margin-bottom:20px">';
+  ciftler.forEach(function(cift){
+    var tip1=cift[0],tip2=cift[1];
+    var grup1=acikOnay.filter(function(m){return m.tip===tip1;});
+    var grup2=acikOnay.filter(function(m){return m.tip===tip2;});
+    var toplam=0;
+    var danismanEslesme={};
+    grup1.forEach(function(m){
+      var esler=calcMatches(m);
+      toplam+=esler.length;
+      var ad=db.users.find(function(u){return +u.id===+m.agentId;});
+      var adStr=ad?ad.name:'?';
+      if(!danismanEslesme[adStr])danismanEslesme[adStr]=0;
+      danismanEslesme[adStr]+=esler.length;
+    });
+    matrisHTML+='<div style="background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:10px">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
+      '<span style="font-size:12px;font-weight:600;color:var(--text)">'+tipLabel2[tip1]+' ↔ '+tipLabel2[tip2]+'</span>'+
+      '<span style="font-size:20px;font-weight:700;color:var(--green);margin-left:auto">'+toplam+' eşleşme</span>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+grup1.length+' '+tipLabel2[tip1]+' × '+grup2.length+' '+tipLabel2[tip2]+' = max '+(grup1.length*grup2.length)+' potansiyel</div>'+
+      '<div style="background:var(--bg);border:1px solid var(--border);height:6px;margin-bottom:12px">'+
+      '<div style="background:var(--green);height:100%;width:'+(grup1.length*grup2.length>0?Math.min(100,Math.round(toplam/(grup1.length*grup2.length)*100)):0)+'%"></div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Danışman bazlı:</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px">'+
+      Object.keys(danismanEslesme).map(function(ad){
+        return '<span style="font-size:11px;background:var(--bg);border:1px solid var(--border);padding:3px 8px;color:var(--text-dim)">'+ad+': '+danismanEslesme[ad]+'</span>';
+      }).join('')+
+      '</div></div>';
+  });
+  matrisHTML+='</div>';
+
+  // Eşleşmeyen kayıtlar
+  var eslesmeyenHTML='<div style="background:var(--surface);border:1px solid var(--border);padding:16px">';
+  eslesmeyenHTML+='<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:12px">Eşleşme Bulamayan Açık Kayıtlar</div>';
+  var eslesmeyenler=acikOnay.filter(function(m){return calcMatches(m).length===0;});
+  if(eslesmeyenler.length===0){
+    eslesmeyenHTML+='<div style="color:var(--green);font-size:12px">✓ Tüm açık kayıtların en az 1 eşleşmesi var.</div>';
+  } else {
+    eslesmeyenHTML+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    eslesmeyenler.forEach(function(m){
+      var ad=db.users.find(function(u){return +u.id===+m.agentId;});
+      eslesmeyenHTML+='<div style="font-size:11px;background:var(--bg);border:1px solid rgba(255,100,100,0.3);padding:5px 10px;color:var(--text-dim)">'+
+        m.ad+' <span style="color:var(--text-muted)">('+tipLabel2[m.tip]+(ad?' · '+ad.name:'')+')</span></div>';
+    });
+    eslesmeyenHTML+='</div>';
+  }
+  eslesmeyenHTML+='</div>';
+
+  document.getElementById('admin-rapor').innerHTML=
+    '<div style="padding:4px 0 16px"><div style="font-size:11px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:16px">Eşleşme Denetim Raporu</div>'+
+    havuzHTML+matrisHTML+eslesmeyenHTML+'</div>';
 }
 
 function onayVer(id){
