@@ -439,6 +439,9 @@ tr:hover td{background:rgba(255,255,255,.015);}
       <div class="field-label">Not</div>
       <textarea class="field-input" id="mNot" placeholder="Örn: 3+1 tercih ediyor, balkon şart" style="margin-bottom:0;height:80px;resize:vertical;font-family:'DM Sans',sans-serif;" autocomplete="off"></textarea>
     </div>
+    <div class="form-row" id="mAgentRow" style="display:none"><div class="field-label">Danışman</div>
+      <select class="form-select" id="mAgentId"></select>
+    </div>
     <div class="form-row"><div class="field-label">Görünürlük</div>
       <select class="form-select" id="mGorunum">
         <option value="gizli">🔒 Sadece Ben Göreyim</option>
@@ -1020,6 +1023,18 @@ function openMusteriModal(editId){
   else{['mAd','mTel','mButce','mNot'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('mButceYazi').textContent='';document.getElementById('mTip').value='alici';document.getElementById('mGorunum').value='gizli';}
   var tipSel=document.getElementById('mTip');
   Array.from(tipSel.options).forEach(function(o){if((o.value==='kiralik'||o.value==='kiraci')&&!db.settings.kiralikKategoriAktif)o.style.display='none';else o.style.display='';});
+  // Admin ise danışman seçimi göster
+  var agentRow=document.getElementById('mAgentRow');
+  var agentSel=document.getElementById('mAgentId');
+  if(currentUser.role==='admin'){
+    agentRow.style.display='';
+    agentSel.innerHTML=db.users.filter(function(u){return u.role!=='admin';}).map(function(u){
+      return '<option value="'+u.id+'">'+u.name+'</option>';
+    }).join('');
+    if(editId){var em=db.musteriler.find(function(x){return x.id===editId;});if(em)agentSel.value=em.agentId;}
+  } else {
+    agentRow.style.display='none';
+  }
   document.getElementById('musteriModal').classList.add('open');
 }
 function editMusteri(id){openMusteriModal(id);}
@@ -1045,7 +1060,9 @@ function saveMusteri(){
     if(gorunum==='acik'&&eskiG==='gizli')newDurum='beklemede';
     else if(gorunum==='gizli')newDurum='onaylandi';
     var _hEl=document.getElementById('mHedefAgent');var hedefId=_hEl&&_hEl.value?+_hEl.value:null;
-supa.from('musteriler').update({ad:ad,tel:tel,tip:tip,butce:rawB,il:il,ilce:ilce,not_:not_,gorunum:gorunum,durum:newDurum,hedef_agent_id:hedefId}).eq('id',musteriEditId)
+var selAgent=document.getElementById('mAgentId');
+    var agentId=currentUser.role==='admin'&&selAgent&&selAgent.value?+selAgent.value:currentUser.id;
+    supa.from('musteriler').update({agent_id:agentId,ad:ad,tel:tel,tip:tip,butce:rawB,il:il,ilce:ilce,not_:not_,gorunum:gorunum,durum:newDurum,hedef_agent_id:hedefId}).eq('id',musteriEditId)
       .then(function(res){
         if(res.error){showToast('Hata: '+res.error.message);return;}
         m.ad=ad;m.tel=tel;m.tip=tip;m.butce=rawB;m.il=il;m.ilce=ilce;m.not=not_;m.gorunum=gorunum;m.durum=newDurum;
@@ -1054,11 +1071,13 @@ supa.from('musteriler').update({ad:ad,tel:tel,tip:tip,butce:rawB,il:il,ilce:ilce
       });
   } else {
     var _hEl=document.getElementById('mHedefAgent');var hedefId=_hEl&&_hEl.value?+_hEl.value:null;
-supa.from('musteriler').insert({agent_id:currentUser.id,ad:ad,tel:tel,tip:tip,butce:rawB,il:il,ilce:ilce,not_:not_,gorunum:gorunum,durum:durum,hedef_agent_id:hedefId}).select().single()
+var selAgent=document.getElementById('mAgentId');
+    var agentId=currentUser.role==='admin'&&selAgent&&selAgent.value?+selAgent.value:currentUser.id;
+    supa.from('musteriler').insert({agent_id:agentId,ad:ad,tel:tel,tip:tip,butce:rawB,il:il,ilce:ilce,not_:not_,gorunum:gorunum,durum:durum,hedef_agent_id:hedefId}).select().single()
       .then(function(res){
         if(res.error){showToast('Hata: '+res.error.message);return;}
         var m=res.data;
-        db.musteriler.unshift({id:+m.id,agentId:+m.agent_id,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:+(m.butce||0),il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum,hedefAgentId:m.hedef_agent_id?+m.hedef_agent_id:null});
+        db.musteriler.unshift({id:+m.id,agentId:+m.agent_id||agentId,ad:m.ad,tel:m.tel||'',tip:m.tip,butce:+(m.butce||0),il:m.il||'',ilce:m.ilce||'',not:m.not_||'',gorunum:m.gorunum,durum:m.durum,hedefAgentId:m.hedef_agent_id?+m.hedef_agent_id:null});
         closeModal('musteriModal');renderMusteriler();updateOnayBadge();
         musteriEditId=null;showToast('Müşteri kaydedildi.');
       });
