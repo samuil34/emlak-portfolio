@@ -699,22 +699,11 @@ function getDurum(musteriId, eslesmeid){
 }
 
 function planGorüşmeSorusu(musteriId, eslesmeid){
-  // Hem focus hem visibilitychange dinle - hangisi önce gelirse
-  var fired=false;
-  var handler=function(){
-    if(fired)return;
-    if(document.hidden)return; // hâlâ gizliyse bekleme
-    fired=true;
-    window.removeEventListener('focus', handler);
-    document.removeEventListener('visibilitychange', handler);
-    setTimeout(function(){
-      var mevcut=getDurum(musteriId,eslesmeid);
-      if(mevcut&&mevcut!=='beklemede')return;
-      showGorüşmeSorusu(musteriId, eslesmeid);
-    }, 1000);
-  };
-  window.addEventListener('focus', handler);
-  document.addEventListener('visibilitychange', handler);
+  setTimeout(function(){
+    var mevcut=getDurum(musteriId,eslesmeid);
+    if(mevcut&&mevcut!=='beklemede')return;
+    showGorüşmeSorusu(musteriId, eslesmeid);
+  }, 4000);
 }
 
 function showGorüşmeSorusu(musteriId, eslesmeid){
