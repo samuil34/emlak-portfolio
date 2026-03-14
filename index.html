@@ -403,7 +403,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
           <div class="card-list" id="adminDanismanCards"></div>
         </div>
         <div id="admin-tumMusteriler" style="display:none">
-          <div class="table-wrap"><table><thead><tr><th>Ad Soyad</th><th>Tip</th><th>Bütçe/Kira</th><th>İlçe</th><th>Danışman</th><th>Görünürlük</th><th>Durum</th><th>İşlem</th></tr></thead><tbody id="adminMusteriTable"></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>Ad Soyad</th><th>Tip</th><th>Bütçe/Kira</th><th>İlçe</th><th>Danışman</th><th>Görünürlük</th><th>Durum</th><th>Hedef</th><th>İşlem</th></tr></thead><tbody id="adminMusteriTable"></tbody></table></div>
           <div class="card-list" id="adminMusteriCards"></div>
         </div>
         <div id="admin-ayarlar" style="display:none"><div class="settings-grid" id="settingsGrid"></div></div>
@@ -1084,12 +1084,26 @@ function renderAdminSection(name){
     }).join('')||'<div style="text-align:center;padding:30px;color:var(--text-muted)">Danışman yok</div>';
   }
   if(name==='tumMusteriler'){
+    var diger=db.users.filter(function(u){return u.role!=='admin';});
+    function hedefBadge(m){
+      if(m.gorunum==='gizli')return '—';
+      if(!m.hedefAgentId)return '<span style="font-size:11px;color:var(--text-muted)">🌐 Herkese</span>';
+      return '<span style="font-size:11px;color:var(--gold)">👤 '+agentName(m.hedefAgentId)+'</span>';
+    }
+    function hedefSelect(m){
+      if(m.gorunum==='gizli'||m.durum==='beklemede')return hedefBadge(m);
+      return '<select onchange="setHedefAgent('+m.id+',this.value)" style="font-size:11px;padding:3px 6px;background:var(--bg);border:1px solid var(--border);color:var(--text)">'+
+        '<option value="" '+(!m.hedefAgentId?'selected':'')+'>🌐 Herkese</option>'+
+        diger.map(function(u){return '<option value="'+u.id+'" '+(m.hedefAgentId===u.id?'selected':'')+'>👤 '+u.name+'</option>';}).join('')+
+        '</select>';
+    }
     document.getElementById('adminMusteriTable').innerHTML=[].concat(db.musteriler).reverse().map(function(m){
-      return '<tr><td>'+m.ad+'</td><td>'+tipBadge(m.tip)+'</td><td>₺'+formatSayi(+(m.butce||0))+'</td><td>'+(m.ilce||'—')+'</td><td>'+agentName(m.agentId)+'</td><td class="vis-toggle" onclick="toggleGorunum('+m.id+')">'+gorununBadge(m.gorunum)+'</td><td>'+durumBadge(m.gorunum,m.durum)+'</td><td><button class="btn-sm danger" onclick="deleteMusteri('+m.id+')">Sil</button></td></tr>';
+      return '<tr><td>'+m.ad+'</td><td>'+tipBadge(m.tip)+'</td><td>₺'+formatSayi(+(m.butce||0))+'</td><td>'+(m.ilce||'—')+'</td><td>'+agentName(m.agentId)+'</td><td class="vis-toggle" onclick="toggleGorunum('+m.id+')">'+gorununBadge(m.gorunum)+'</td><td>'+durumBadge(m.gorunum,m.durum)+'</td><td>'+hedefSelect(m)+'</td><td><button class="btn-sm danger" onclick="deleteMusteri('+m.id+')">Sil</button></td></tr>';
     }).join('');
     document.getElementById('adminMusteriCards').innerHTML=[].concat(db.musteriler).reverse().map(function(m){
       return '<div class="m-card"><div class="m-card-header"><span class="m-card-name">'+m.ad+'</span>'+tipBadge(m.tip)+'</div>'+
       '<div class="m-card-meta">₺'+formatSayi(+(m.butce||0))+' · '+(m.ilce||'—')+' · '+agentName(m.agentId)+'</div>'+
+      '<div style="margin:6px 0 4px">'+hedefSelect(m)+'</div>'+
       '<div class="m-card-footer"><div style="display:flex;gap:4px;flex-wrap:wrap;"><span class="vis-toggle" onclick="toggleGorunum('+m.id+')">'+gorununBadge(m.gorunum)+'</span>'+durumBadge(m.gorunum,m.durum)+'</div>'+
       '<button class="btn-sm danger" onclick="deleteMusteri('+m.id+')">Sil</button></div></div>';
     }).join('');
