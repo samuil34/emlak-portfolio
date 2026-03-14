@@ -1648,23 +1648,26 @@ function showMatchDetail(id){
     matches.forEach(function(x,i){
       var revealed=isRevealed(x.id);
       var butceFark=m.butce&&x.butce?Math.round(Math.abs(+(m.butce)-+(x.butce))/+(m.butce)*100):null;
-      html+='<div style="border:1px solid var(--border);margin-bottom:8px;overflow:hidden">';
-      // Kart başlığı
-      html+='<div style="background:var(--surface2);padding:10px 14px;display:flex;align-items:center;justify-content:space-between">>';
-      html+='<div style="display:flex;align-items:center;gap:8px">'+
+      var kendiKayit=+x.agentId===+currentUser.id;
+      html+='<div style="border:1px solid '+(kendiKayit?'rgba(201,168,76,0.4)':'var(--border)')+';margin-bottom:8px;overflow:hidden">';
+      html+='<div style="background:var(--surface2);padding:10px 14px;display:flex;align-items:center;justify-content:space-between">';
+      html+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
         '<span style="font-size:12px;color:var(--text-muted);font-weight:600">#'+(i+1)+'</span>'+
         tipBadge(x.tip)+
         (butceFark!==null?'<span style="font-size:10px;color:'+(butceFark<=10?'var(--green)':butceFark<=30?'var(--gold)':'var(--text-muted)')+';background:var(--bg);padding:2px 6px">%'+butceFark+' fark</span>':'')+
+        (kendiKayit?'<span style="font-size:10px;color:var(--gold);background:rgba(201,168,76,0.1);padding:2px 8px;border:1px solid var(--gold-dim)">★ Kendi Kaydınız</span>':'')+
         '</div>';
       html+='</div>';
-      // Kart detay
       html+='<div style="padding:12px 14px">';
       html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:10px">';
       if(x.il||x.ilce)html+='<div style="font-size:12px;padding:6px 8px;background:var(--bg);color:var(--text-dim)">📍 '+(x.il||'')+(x.ilce?'<br>'+x.ilce:'')+'</div>';
       html+='<div style="font-size:12px;padding:6px 8px;background:var(--bg);color:var(--text-dim)">💰 ₺'+formatSayi(+(x.butce||0))+'</div>';
       if(x.not)html+='<div style="font-size:12px;padding:6px 8px;background:var(--bg);color:var(--text-dim);grid-column:1/-1">📝 '+x.not+'</div>';
       html+='</div>';
-      if(!revealed){
+      if(kendiKayit){
+        html+='<div style="padding:10px 12px;background:rgba(201,168,76,0.06);border:1px solid var(--gold-dim);font-size:12px;color:var(--gold)">'+
+          '★ Bu kayıt size ait — hak harcanmaz.</div>';
+      } else if(!revealed){
         html+='<button onclick="revealMatch('+m.id+','+x.id+')" style="width:100%;padding:10px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold);font-size:12px;cursor:pointer;letter-spacing:0.5px">'+
           '🔓 Danışmanı Gör &nbsp;·&nbsp; '+cost+' Hak</button>';
       } else {
